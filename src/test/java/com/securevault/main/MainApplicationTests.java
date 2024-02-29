@@ -1,10 +1,10 @@
-package com.example.securevaultserver;
+package com.securevault.main;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class SecureVaultServerApplicationTests {
+class MainApplicationTests {
 
 	@Test
 	void contextLoads() {

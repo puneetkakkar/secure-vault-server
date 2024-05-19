@@ -1,10 +1,11 @@
 package com.securevault.main.entity;
 
-import com.securevault.main.model.AddUserRequest;
+import java.time.LocalDateTime;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
+import com.securevault.main.model.AddUserRequest;
 
 @Document(collection = "user")
 public class User {
@@ -12,7 +13,9 @@ public class User {
     @Id
     private String id;
     private String name;
+    @SuppressWarnings("unused")
     private LocalDateTime createdOn;
+    @SuppressWarnings("unused")
     private LocalDateTime updatedOn;
 
     public User(AddUserRequest request) {

@@ -1,6 +1,6 @@
 MIT License
 
-Copyright (c) [Puneet Kakkar]
+Copyright (c) [Puneet Kakkar](https://github.com/puneetkakkar)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

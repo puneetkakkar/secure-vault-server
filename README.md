@@ -40,7 +40,7 @@
 2. **Navigate to the project directory:**
     ```bash
     # Navigate to the required project\'s folder
-    cd secure-vault-web
+    cd secure-vault-server
 
 3. **Install dependencies:**
     ```bash

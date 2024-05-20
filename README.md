@@ -35,7 +35,7 @@
 1. **Clone the repository:**
    ```bash
    # Clone this repository to your local machine.
-   git clone https://github.com/puneetkakkar/secure-vault-web
+   git clone https://github.com/puneetkakkar/secure-vault-server
 
 2. **Navigate to the project directory:**
     ```bash

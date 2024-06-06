@@ -2,6 +2,11 @@ package com.securevault.main.service;
 
 import java.util.List;
 
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.BeanPropertyBindingResult;
@@ -12,6 +17,7 @@ import org.springframework.validation.FieldError;
 import com.securevault.main.dto.request.auth.RegisterRequest;
 import com.securevault.main.dto.request.user.AbstractBaseCreateUserRequest;
 import com.securevault.main.entity.User;
+import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.repository.UserRepository;
 import com.securevault.main.util.Constants;
 
@@ -22,10 +28,26 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional
 @Slf4j
-public class UserService {
+public class UserService implements UserDetailsService {
 	private final UserRepository userRepository;
 	private final RoleService roleService;
 	private final MessageSourceService messageSourceService;
+	private final PasswordEncoder passwordEncoder;
+
+	@Override
+	public UserDetails loadUserByUsername(String username) {
+		return userRepository.findByEmail(username)
+				.orElseThrow(() -> new UsernameNotFoundException(messageSourceService.get("{user_not_found}")));
+	}
+
+	public User findByEmail(final String email) {
+		return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException(
+				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));
+	}
+
+	public User getPrincipal(final Authentication authentication) {
+		return (User) authentication.getPrincipal();
+	}
 
 	public User register(final RegisterRequest request) throws BindException {
 		log.info("Registering user with email: {}", request.getEmail());
@@ -51,7 +73,8 @@ public class UserService {
 			throw new BindException(bindingResult);
 		}
 
-		return User.builder().email(request.getEmail()).masterPasswordHash(request.getMasterPasswordHash())
+		return User.builder().email(request.getEmail())
+				.masterPasswordHash(passwordEncoder.encode(request.getMasterPasswordHash()))
 				.masterPasswordHint(request.getMasterPasswordHint()).name(request.getName())
 				.kdfIterations(request.getKdfIterations()).build();
 

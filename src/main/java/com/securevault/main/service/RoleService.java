@@ -23,7 +23,7 @@ public class RoleService {
 	 */
 	public Role findByName(final Constants.RoleEnum name) {
 		return roleRepository.findByName(name)
-				.orElseThrow(() -> new NotFoundException("Role Not Found"));
+				.orElseThrow(() -> new NotFoundException(messageSourceService.get("{role_not_found}")));
 	}
 
 	/**

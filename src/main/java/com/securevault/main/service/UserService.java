@@ -40,6 +40,14 @@ public class UserService implements UserDetailsService {
 				.orElseThrow(() -> new UsernameNotFoundException(messageSourceService.get("{user_not_found}")));
 	}
 
+	public User loadUserById(final String id) {
+		User user = userRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException(
+						messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));
+
+		return user;
+	}
+
 	public User findByEmail(final String email) {
 		return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException(
 				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));

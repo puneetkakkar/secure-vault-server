@@ -8,13 +8,16 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.securevault.main.security.JwtAuthEntryPoint;
+import com.securevault.main.security.JwtAuthenticationFilter;
 import com.securevault.main.service.UserService;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,15 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class WebSecurityConfiguration {
 	private JwtAuthEntryPoint jwtAuthEntryPoint;
-	// private UserService userService;
-
-	// @Bean
-	// public AuthenticationProvider authenticationProvider() {
-	// DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-	// authProvider.setUserDetailsService();
-	// authProvider.setPasswordEncoder(passwordEncoder());
-	// return authProvider;
-	// }
+	private JwtAuthenticationFilter jwtAuthenticationFilter;
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -48,13 +43,6 @@ public class WebSecurityConfiguration {
 		return new ProviderManager(provider);
 	}
 
-	// @Bean
-	// public AuthenticationManager
-	// authenticationManager(AuthenticationConfiguration authConfig) throws
-	// Exception {
-	// return authConfig.getAuthenticationManager();
-	// }
-
 	/**
 	 * Configure Spring Security
 	 *
@@ -68,12 +56,13 @@ public class WebSecurityConfiguration {
 		log.info("Security Filter Chain");
 		return http
 				.csrf(csrf -> csrf.disable())
-				.authorizeHttpRequests(
-						requests -> requests.requestMatchers("/", "/dummy", "/api/auth/**").permitAll().anyRequest()
-								.authenticated())
 				.exceptionHandling(configurer -> configurer.authenticationEntryPoint(jwtAuthEntryPoint))
 				.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				// .authenticationProvider(authenticationProvider())
+				.headers(configurer -> configurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+				.authorizeHttpRequests(
+						requests -> requests.requestMatchers("/", "/api/auth/**").permitAll().anyRequest()
+								.authenticated())
 				.build();
 	}
 

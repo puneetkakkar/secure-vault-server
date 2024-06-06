@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.securevault.main.entity.JwtToken;
-import com.securevault.main.entity.User;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.service.JwtTokenService;
 import com.securevault.main.service.UserService;
@@ -70,7 +69,7 @@ public class JwtTokenProvider {
 		return token;
 	}
 
-	public User getPrincipal(final Authentication authentication) {
+	public JwtUserDetails getPrincipal(final Authentication authentication) {
 		return userService.getPrincipal(authentication);
 	}
 

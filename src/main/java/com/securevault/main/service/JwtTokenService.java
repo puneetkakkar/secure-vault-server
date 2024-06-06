@@ -7,11 +7,9 @@ import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.repository.JwtTokenRepository;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class JwtTokenService {
 	private final JwtTokenRepository jwtTokenRepository;
 	private final MessageSourceService messageSourceService;

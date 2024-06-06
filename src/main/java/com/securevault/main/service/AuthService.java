@@ -14,6 +14,7 @@ import com.securevault.main.entity.JwtToken;
 import com.securevault.main.entity.User;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.security.JwtTokenProvider;
+import com.securevault.main.security.JwtUserDetails;
 import com.securevault.main.util.UUIDUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,6 +39,7 @@ public class AuthService {
 
 		try {
 			User user = userService.findByEmail(email);
+			email = user.getEmail();
 		} catch (Exception e) {
 			log.error("User not found with email: {}", email);
 			throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
@@ -48,7 +50,7 @@ public class AuthService {
 
 		try {
 			Authentication authentication = authenticationManager.authenticate(authenticationToken);
-			User user = jwtTokenProvider.getPrincipal(authentication);
+			JwtUserDetails user = jwtTokenProvider.getPrincipal(authentication);
 
 			String uuidString = user.getId();
 			UUID uuid = UUIDUtils.fromHexString(uuidString);

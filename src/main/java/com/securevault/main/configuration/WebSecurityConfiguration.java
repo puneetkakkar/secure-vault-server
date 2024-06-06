@@ -2,6 +2,7 @@ package com.securevault.main.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -20,15 +21,16 @@ import com.securevault.main.security.JwtAuthEntryPoint;
 import com.securevault.main.security.JwtAuthenticationFilter;
 import com.securevault.main.service.UserService;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
+@RequiredArgsConstructor
 @Slf4j
 public class WebSecurityConfiguration {
-	private JwtAuthEntryPoint jwtAuthEntryPoint;
-	private JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
@@ -51,7 +53,8 @@ public class WebSecurityConfiguration {
 	 * @throws Exception
 	 */
 	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http)
+	public SecurityFilterChain securityFilterChain(HttpSecurity http,
+			@Lazy JwtAuthenticationFilter jwtAuthenticationFilter)
 			throws Exception {
 		log.info("Security Filter Chain");
 		return http

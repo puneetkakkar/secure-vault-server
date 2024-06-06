@@ -6,11 +6,11 @@ import java.util.Objects;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.securevault.main.entity.User;
 import com.securevault.main.service.UserService;
 
 import jakarta.servlet.FilterChain;
@@ -30,24 +30,27 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	private final AuthenticationManager authenticationManager;
 
+	@Override
 	protected final void doFilterInternal(@NonNull final HttpServletRequest request,
 			@NonNull final HttpServletResponse response, @NonNull final FilterChain filterChain)
 			throws ServletException, IOException {
 
-		String token = jwtTokenProvider.extractJwtFromRequest(request);
+		if (jwtTokenProvider != null) {
+			String token = jwtTokenProvider.extractJwtFromRequest(request);
 
-		/**
-		 * Performing authentication of the user based on the
-		 * information extracted from the token provided.
-		 */
-		if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token, request)) {
-			String id = jwtTokenProvider.getUserIdFromToken(token);
-			User user = userService.loadUserById(id);
+			/**
+			 * Performing authentication of the user based on the
+			 * information extracted from the token provided.
+			 */
+			if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token, request)) {
+				String id = jwtTokenProvider.getUserIdFromToken(token);
+				UserDetails user = userService.loadUserById(id);
 
-			if (Objects.nonNull(user)) {
-				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
-						user.getAuthorities());
-				authenticationManager.authenticate(auth);
+				if (Objects.nonNull(user)) {
+					UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
+							user.getAuthorities());
+					authenticationManager.authenticate(auth);
+				}
 			}
 		}
 

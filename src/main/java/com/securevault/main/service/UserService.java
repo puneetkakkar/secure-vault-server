@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +18,7 @@ import com.securevault.main.dto.request.user.AbstractBaseCreateUserRequest;
 import com.securevault.main.entity.User;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.repository.UserRepository;
+import com.securevault.main.security.JwtUserDetails;
 import com.securevault.main.util.Constants;
 
 import lombok.RequiredArgsConstructor;
@@ -35,17 +35,20 @@ public class UserService implements UserDetailsService {
 	private final PasswordEncoder passwordEncoder;
 
 	@Override
-	public UserDetails loadUserByUsername(String username) {
-		return userRepository.findByEmail(username)
-				.orElseThrow(() -> new UsernameNotFoundException(messageSourceService.get("{user_not_found}")));
+	public UserDetails loadUserByUsername(final String email) {
+		User user = userRepository.findByEmail(email)
+				.orElseThrow(() -> new NotFoundException(messageSourceService.get("not_found_with_param",
+						new String[] { messageSourceService.get("user") })));
+
+		return JwtUserDetails.create(user);
 	}
 
-	public User loadUserById(final String id) {
+	public UserDetails loadUserById(final String id) {
 		User user = userRepository.findById(id)
 				.orElseThrow(() -> new NotFoundException(
 						messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));
 
-		return user;
+		return JwtUserDetails.create(user);
 	}
 
 	public User findByEmail(final String email) {
@@ -53,8 +56,8 @@ public class UserService implements UserDetailsService {
 				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));
 	}
 
-	public User getPrincipal(final Authentication authentication) {
-		return (User) authentication.getPrincipal();
+	public JwtUserDetails getPrincipal(final Authentication authentication) {
+		return (JwtUserDetails) authentication.getPrincipal();
 	}
 
 	public User register(final RegisterRequest request) throws BindException {

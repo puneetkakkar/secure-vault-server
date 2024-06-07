@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.securevault.main.dto.response.ErrorResponse;
 import com.securevault.main.exception.AppExceptionHandler;
+import com.securevault.main.service.MessageSourceService;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
-	// private final MessageSourceService messageSourceService;
+	private final MessageSourceService messageSourceService;
 
 	private final ObjectMapper objectMapper;
 
@@ -54,7 +55,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 
 		log.error("Could not set user authentication in security context. Error: {}", message);
 
-		ResponseEntity<ErrorResponse> responseEntity = new AppExceptionHandler()
+		ResponseEntity<ErrorResponse> responseEntity = new AppExceptionHandler(messageSourceService)
 				.handleBadCredentialsException(new BadCredentialsException(message));
 
 		response.getWriter().write(objectMapper.writeValueAsString(responseEntity.getBody()));

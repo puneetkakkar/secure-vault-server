@@ -18,7 +18,7 @@ public class JwtToken {
 	@Id
 	private String id;
 
-	private UUID userId;
+	private String userId;
 
 	private String token;
 

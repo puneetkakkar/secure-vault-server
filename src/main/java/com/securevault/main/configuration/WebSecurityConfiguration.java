@@ -2,7 +2,6 @@ package com.securevault.main.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -32,13 +31,16 @@ import lombok.extern.slf4j.Slf4j;
 public class WebSecurityConfiguration {
 	private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new Pbkdf2PasswordEncoder("secret-key", 600000, 256, SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
 	}
 
 	@Bean
-	public AuthenticationManager authenticationManager(UserService userService, PasswordEncoder encoder) {
+	public AuthenticationManager authenticationManager(UserService userService,
+			PasswordEncoder encoder) {
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
 		provider.setUserDetailsService(userService);
 		provider.setPasswordEncoder(encoder);
@@ -53,10 +55,8 @@ public class WebSecurityConfiguration {
 	 * @throws Exception
 	 */
 	@Bean
-	public SecurityFilterChain securityFilterChain(HttpSecurity http,
-			@Lazy JwtAuthenticationFilter jwtAuthenticationFilter)
+	public SecurityFilterChain securityFilterChain(HttpSecurity http)
 			throws Exception {
-		log.info("Security Filter Chain");
 		return http
 				.csrf(csrf -> csrf.disable())
 				.exceptionHandling(configurer -> configurer.authenticationEntryPoint(jwtAuthEntryPoint))

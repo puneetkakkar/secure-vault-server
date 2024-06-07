@@ -22,17 +22,20 @@ import org.springframework.web.multipart.support.MissingServletRequestPartExcept
 
 import com.securevault.main.dto.response.DetailedErrorResponse;
 import com.securevault.main.dto.response.ErrorResponse;
+import com.securevault.main.service.MessageSourceService;
 
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
-@NoArgsConstructor
+@RequiredArgsConstructor
 @Slf4j
 public class AppExceptionHandler {
+	private final MessageSourceService messageSourceService;
 
 	@ExceptionHandler({
 			BadRequestException.class,

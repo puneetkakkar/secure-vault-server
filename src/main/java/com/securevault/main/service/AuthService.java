@@ -1,7 +1,5 @@
 package com.securevault.main.service;
 
-import java.util.UUID;
-
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -15,7 +13,6 @@ import com.securevault.main.entity.User;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.security.JwtTokenProvider;
 import com.securevault.main.security.JwtUserDetails;
-import com.securevault.main.util.UUIDUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -53,16 +50,15 @@ public class AuthService {
 			JwtUserDetails user = jwtTokenProvider.getPrincipal(authentication);
 
 			String uuidString = user.getId();
-			UUID uuid = UUIDUtils.fromHexString(uuidString);
 
-			return generateToken(uuid, rememberMe);
+			return generateToken(uuidString, rememberMe);
 		} catch (NotFoundException e) {
 			log.error("Authentication failed for email: {}", email);
 			throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
 		}
 	}
 
-	private TokenResponse generateToken(final UUID id, final Boolean rememberMe) {
+	private TokenResponse generateToken(final String id, final Boolean rememberMe) {
 		String token = jwtTokenProvider.generateJwt(id.toString());
 		String refreshToken = jwtTokenProvider.generateRefresh(id.toString());
 

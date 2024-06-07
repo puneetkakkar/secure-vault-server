@@ -80,7 +80,6 @@ public class JwtTokenProvider {
 	}
 
 	public String generateJwt(final String id) {
-		log.info("ID: {}", id);
 		return generateTokenByUserId(id, tokenExpiresIn);
 	}
 
@@ -101,7 +100,7 @@ public class JwtTokenProvider {
 				return false;
 			}
 		} catch (NotFoundException e) {
-			log.error("[JWT] Token could not be found in Database");
+			log.error("[JWT] Token could not be found in Redis");
 			return false;
 		}
 
@@ -112,7 +111,7 @@ public class JwtTokenProvider {
 		try {
 			boolean isTokenValid = validateToken(token);
 			if (!isTokenValid) {
-				log.error("[JWT] Token could not be found in database");
+				log.error("[JWT] Token could not be found in local cache");
 				httpServletRequest.setAttribute("notfound", "Token is not found in cache");
 			}
 			return isTokenValid;

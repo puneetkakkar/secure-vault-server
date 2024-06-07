@@ -1,6 +1,7 @@
-package com.securevault.main.dto.response;
+package com.securevault.main.dto.response.user;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.securevault.main.entity.User;
@@ -8,7 +9,7 @@ import com.securevault.main.entity.User;
 public class UserResponse {
 
 	@JsonProperty("id")
-	private String id;
+	private UUID id;
 	@JsonProperty("name")
 	private String name;
 	@JsonProperty("created_on")
@@ -21,7 +22,7 @@ public class UserResponse {
 		this.name = user.getName();
 	}
 
-	public void setId(String id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 

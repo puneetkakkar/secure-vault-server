@@ -1,9 +1,12 @@
 package com.securevault.main.entity;
 
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.TimeToLive;
+import org.springframework.data.redis.core.index.Indexed;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -12,23 +15,30 @@ import lombok.Setter;
 @Builder
 @Getter
 @Setter
-@Document(collection = "jwtTokens")
+@RedisHash(value = "jwtTokens")
 public class JwtToken {
 
 	@Id
-	private String id;
+	private UUID id;
 
-	private String userId;
+	@Indexed
+	private UUID userId;
 
+	@Indexed
 	private String token;
 
+	@Indexed
 	private String refreshToken;
 
+	@Indexed
 	private Boolean rememberMe;
 
+	@Indexed
 	private String ipAddress;
 
+	@Indexed
 	private String userAgent;
 
+	@TimeToLive(unit = TimeUnit.MILLISECONDS)
 	private Long tokenTimeToLive;
 }

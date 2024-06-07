@@ -26,7 +26,6 @@ import com.securevault.main.service.MessageSourceService;
 
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.validation.ConstraintViolationException;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 

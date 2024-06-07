@@ -1,6 +1,7 @@
 package com.securevault.main.service;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -44,7 +45,7 @@ public class UserService implements UserDetailsService {
 	}
 
 	public UserDetails loadUserById(final String id) {
-		User user = userRepository.findById(id)
+		User user = userRepository.findById(UUID.fromString(id))
 				.orElseThrow(() -> new NotFoundException(
 						messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));
 

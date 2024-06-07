@@ -2,6 +2,7 @@ package com.securevault.main.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -24,10 +25,10 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User {
+public class User extends AbstractUuidIdentified {
 
 	@Id
-	private String id;
+	private UUID id;
 
 	@NotBlank
 	@Size(max = 20)

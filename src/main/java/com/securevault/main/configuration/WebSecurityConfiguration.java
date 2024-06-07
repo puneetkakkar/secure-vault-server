@@ -21,13 +21,11 @@ import com.securevault.main.security.JwtAuthenticationFilter;
 import com.securevault.main.service.UserService;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
-@Slf4j
 public class WebSecurityConfiguration {
 	private final JwtAuthEntryPoint jwtAuthEntryPoint;
 

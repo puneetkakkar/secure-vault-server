@@ -4,11 +4,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.securevault.main.dto.annotation.ApiVersion;
 import com.securevault.main.dto.request.auth.LoginRequest;
 import com.securevault.main.dto.request.auth.RegisterRequest;
 import com.securevault.main.dto.response.SuccessResponse;
@@ -22,7 +25,8 @@ import lombok.RequiredArgsConstructor;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
+@ApiVersion("1")
 @RequiredArgsConstructor
 public class AuthController extends AbstractBaseController {
 	private final AuthService authService;
@@ -42,6 +46,17 @@ public class AuthController extends AbstractBaseController {
 
 		return ResponseEntity
 				.ok(authService.login(request.getEmail(), request.getMasterPasswordHash(), request.getRememberMe()));
+	}
+
+	@GetMapping("/dummy")
+	public String hello1(@RequestParam(value = "name", defaultValue = "Java") String name) {
+		return String.format("Yay! Hello %s V1!", name);
+	}
+
+	@GetMapping("/dummy")
+	@ApiVersion("2")
+	public String hello2(@RequestParam(value = "name", defaultValue = "Java") String name) {
+		return String.format("Yay! Hello %s V2!", name);
 	}
 
 }

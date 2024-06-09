@@ -62,7 +62,7 @@ public class WebSecurityConfiguration {
 				.headers(configurer -> configurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.authorizeHttpRequests(
-						requests -> requests.requestMatchers("/", "/api/auth/**").permitAll().anyRequest()
+						requests -> requests.requestMatchers("/", "/api/v1/auth/**").permitAll().anyRequest()
 								.authenticated())
 				.build();
 	}

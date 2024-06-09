@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.securevault.main.dto.annotation.ApiVersion;
+import com.securevault.main.configuration.api.ApiVersion;
 import com.securevault.main.dto.request.auth.LoginRequest;
 import com.securevault.main.dto.request.auth.RegisterRequest;
 import com.securevault.main.dto.response.SuccessResponse;

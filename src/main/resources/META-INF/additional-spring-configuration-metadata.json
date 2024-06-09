@@ -1,0 +1,29 @@
+{
+  "properties": [
+    {
+      "name": "api.uri-prefix",
+      "type": "java.lang.String",
+      "description": "A description for 'api.uri-prefix'"
+    },
+    {
+      "name": "app.secret",
+      "type": "java.lang.String",
+      "description": "A description for 'app.secret'"
+    },
+    {
+      "name": "app.jwt.token.expires-in",
+      "type": "java.lang.String",
+      "description": "A description for 'app.jwt.token.expires-in'"
+    },
+    {
+      "name": "app.jwt.refresh-token.expires-in",
+      "type": "java.lang.String",
+      "description": "A description for 'app.jwt.refresh-token.expires-in'"
+    },
+    {
+      "name": "app.jwt.remember-me.expires-in",
+      "type": "java.lang.String",
+      "description": "A description for 'app.jwt.remember-me.expires-in'"
+    }
+  ]
+}

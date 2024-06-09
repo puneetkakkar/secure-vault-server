@@ -1,4 +1,4 @@
-package com.securevault.main.dto.annotation;
+package com.securevault.main.configuration.api;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

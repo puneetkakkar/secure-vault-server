@@ -1,5 +1,7 @@
 package com.securevault.main.service;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.securevault.main.entity.JwtToken;
@@ -7,7 +9,9 @@ import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.repository.JwtTokenRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class JwtTokenService {
@@ -19,6 +23,11 @@ public class JwtTokenService {
 				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("token") })));
 	}
 
+	public JwtToken findByUserIdAndRefreshToken(UUID id, String refreshToken) {
+		return jwtTokenRepository.findByUserIdAndRefreshToken(id, refreshToken).orElseThrow(() -> new NotFoundException(
+				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("token") })));
+	}
+
 	/**
 	 * Save a JWT token
 	 * 
@@ -26,6 +35,11 @@ public class JwtTokenService {
 	 */
 	public void save(JwtToken jwtToken) {
 		jwtTokenRepository.save(jwtToken);
+	}
+
+	public void delete(JwtToken jwtToken) {
+		jwtTokenRepository.delete(jwtToken);
+		log.info("Deleted token: {}", jwtToken);
 	}
 
 }

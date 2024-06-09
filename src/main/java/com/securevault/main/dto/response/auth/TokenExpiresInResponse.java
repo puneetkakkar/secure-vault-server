@@ -11,5 +11,4 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class TokenExpiresInResponse extends AbstractBaseResponse {
 	private Long token;
-	private Long refreshToken;
 }

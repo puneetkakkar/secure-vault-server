@@ -3,10 +3,12 @@ package com.securevault.main.controller;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,7 +24,9 @@ import com.securevault.main.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
 @RequestMapping("/auth")
@@ -46,6 +50,11 @@ public class AuthController extends AbstractBaseController {
 
 		return ResponseEntity
 				.ok(authService.login(request.getEmail(), request.getMasterPasswordHash(), request.getRememberMe()));
+	}
+
+	@GetMapping("/refresh")
+	public ResponseEntity<TokenResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
+		return ResponseEntity.ok(authService.refreshFromCookie(refreshToken));
 	}
 
 	@GetMapping("/dummy")

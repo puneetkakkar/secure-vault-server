@@ -52,6 +52,16 @@ public class UserService implements UserDetailsService {
 		return JwtUserDetails.create(user);
 	}
 
+	public User findById(UUID id) {
+		return userRepository.findById(id)
+				.orElseThrow(() -> new NotFoundException(messageSourceService.get("not_found_with_param",
+						new String[] { messageSourceService.get("user") })));
+	}
+
+	public User findById(String id) {
+		return findById(UUID.fromString(id));
+	}
+
 	public User findByEmail(final String email) {
 		return userRepository.findByEmail(email).orElseThrow(() -> new NotFoundException(
 				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));

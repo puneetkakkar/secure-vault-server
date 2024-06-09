@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import com.securevault.main.entity.JwtToken;
+import com.securevault.main.entity.User;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.service.JwtTokenService;
 import com.securevault.main.service.UserService;
@@ -79,6 +80,24 @@ public class JwtTokenProvider {
 		return claims.getSubject();
 	}
 
+	public User getUserFromToken(final String token) {
+		try {
+			return userService.findById(getUserIdFromToken(token));
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	public JwtToken getTokenOrRefreshToken(final String token) {
+		try {
+			JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(token);
+			return jwtToken;
+		} catch (NotFoundException e) {
+			log.error("[JWT] Token could not be found in Redis");
+			return null;
+		}
+	}
+
 	public String generateJwt(final String id) {
 		return generateTokenByUserId(id, tokenExpiresIn);
 	}
@@ -93,14 +112,15 @@ public class JwtTokenProvider {
 
 	public boolean validateToken(final String token, final boolean isHttp) {
 		parseToken(token);
-		try {
-			JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(token);
-			if (isHttp && !httpServletRequest.getHeader("User-agent").equals(jwtToken.getUserAgent())) {
-				log.error("[JWT] User-agent is not matched");
-				return false;
-			}
-		} catch (NotFoundException e) {
-			log.error("[JWT] Token could not be found in Redis");
+
+		JwtToken jwtToken = getTokenOrRefreshToken(token);
+
+		if (jwtToken == null) {
+			return false;
+		}
+
+		if (isHttp && !httpServletRequest.getHeader("User-agent").equals(jwtToken.getUserAgent())) {
+			log.error("[JWT] User-agent is not matched");
 			return false;
 		}
 

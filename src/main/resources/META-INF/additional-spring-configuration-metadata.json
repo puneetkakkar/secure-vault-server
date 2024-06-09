@@ -6,11 +6,6 @@
       "description": "A description for 'api.uri-prefix'"
     },
     {
-      "name": "app.secret",
-      "type": "java.lang.String",
-      "description": "A description for 'app.secret'"
-    },
-    {
       "name": "app.jwt.token.expires-in",
       "type": "java.lang.String",
       "description": "A description for 'app.jwt.token.expires-in'"
@@ -24,6 +19,51 @@
       "name": "app.jwt.remember-me.expires-in",
       "type": "java.lang.String",
       "description": "A description for 'app.jwt.remember-me.expires-in'"
+    },
+    {
+      "name": "cookie.refresh.domain",
+      "type": "java.lang.String",
+      "description": "A description for 'cookie.refresh.domain'"
+    },
+    {
+      "name": "cookie.refresh.path",
+      "type": "java.lang.String",
+      "description": "A description for 'cookie.refresh.path'"
+    },
+    {
+      "name": "cookie.refresh.sameSite",
+      "type": "java.lang.String",
+      "description": "A description for 'cookie.refresh.sameSite'"
+    },
+    {
+      "name": "cookie.refresh.httpOnly",
+      "type": "java.lang.String",
+      "description": "A description for 'cookie.refresh.httpOnly'"
+    },
+    {
+      "name": "cookie.refresh.secure",
+      "type": "java.lang.String",
+      "description": "A description for 'cookie.refresh.secure'"
+    },
+    {
+      "name": "app.jwt.secret",
+      "type": "java.lang.String",
+      "description": "A description for 'app.jwt.secret'"
+    },
+    {
+      "name": "app.pbkdf2.secret",
+      "type": "java.lang.String",
+      "description": "A description for 'app.pbkdf2.secret'"
+    },
+    {
+      "name": "app.pbkdf2.salt-length",
+      "type": "java.lang.String",
+      "description": "A description for 'app.pbkdf2.salt-length'"
+    },
+    {
+      "name": "app.pbkdf2.iterations",
+      "type": "java.lang.String",
+      "description": "A description for 'app.pbkdf2.iterations'"
     }
   ]
 }

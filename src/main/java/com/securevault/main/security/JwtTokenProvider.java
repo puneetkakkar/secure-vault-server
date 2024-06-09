@@ -45,7 +45,7 @@ public class JwtTokenProvider {
 	private final HttpServletRequest httpServletRequest;
 
 	public JwtTokenProvider(
-			@Value("${app.secret}") final String appSecret,
+			@Value("${app.jwt.secret}") final String appSecret,
 			@Value("${app.jwt.token.expires-in}") final Long tokenExpiresIn,
 			@Value("${app.jwt.refresh-token.expires-in}") final Long refreshTokenExpiresIn,
 			@Value("${app.jwt.remember-me.expires-in}") final Long rememberMeTokenExpiresIn,

@@ -2,6 +2,9 @@ package com.securevault.main.service;
 
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,7 +20,6 @@ import com.securevault.main.exception.RefreshTokenExpiredException;
 import com.securevault.main.security.JwtTokenProvider;
 import com.securevault.main.security.JwtUserDetails;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,21 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
+	@Value("${cookie.refresh.domain}")
+	private String cookieDomain;
+
+	@Value("${cookie.refresh.path}")
+	private String cookiePath;
+
+	@Value("${cookie.refresh.httpOnly}")
+	private boolean isCookieHttpOnly;
+
+	@Value("${cookie.refresh.secure}")
+	private boolean isCookieSecure;
+
+	@Value("${cookie.refresh.sameSite}")
+	private String cookieSameSite;
+
 	private final AuthenticationManager authenticationManager;
 	private final UserService userService;
 	private final JwtTokenService jwtTokenService;
@@ -114,15 +131,12 @@ public class AuthService {
 		log.info("Token generated for user: {}", id);
 
 		// Set the refresh token as an HttpOnly cookie
-		// TODO: configure cookie secure flag to true and false based on
-		// profiles/environment
-		Cookie cookie = new Cookie("refreshToken", refreshToken);
-		cookie.setDomain("localhost");
-		cookie.setPath("/api/v1/auth");
-		cookie.setHttpOnly(true);
 		int maxAgeInSeconds = (int) Math.min(jwtTokenProvider.getRefreshTokenExpiresIn(), Integer.MAX_VALUE);
-		cookie.setMaxAge(maxAgeInSeconds);
-		httpServletResponse.addCookie(cookie);
+
+		ResponseCookie jwtCookie = ResponseCookie.from("refreshToken", refreshToken).domain(cookieDomain).path(cookiePath)
+				.httpOnly(isCookieHttpOnly).secure(isCookieSecure).sameSite(cookieSameSite).maxAge(maxAgeInSeconds).build();
+
+		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
 
 		return TokenResponse.builder()
 				.token(token)

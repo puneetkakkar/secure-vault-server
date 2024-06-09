@@ -1,5 +1,6 @@
 package com.securevault.main.configuration;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -27,13 +28,23 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfiguration {
+	@Value("${app.pbkdf2.secret}")
+	private String pbkdf2Secret;
+
+	@Value("${app.pbkdf2.salt-length}")
+	private Integer pbkdf2SaltLength;
+
+	@Value("${app.pbkdf2.iterations}")
+	private Integer pbkdf2Iterations;
+
 	private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
 	@Bean
 	public PasswordEncoder passwordEncoder() {
-		return new Pbkdf2PasswordEncoder("secret-key", 600000, 256, SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
+		return new Pbkdf2PasswordEncoder(pbkdf2Secret, pbkdf2SaltLength, pbkdf2Iterations,
+				SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
 	}
 
 	@Bean

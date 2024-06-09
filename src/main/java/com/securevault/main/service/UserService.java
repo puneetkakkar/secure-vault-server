@@ -95,6 +95,8 @@ public class UserService implements UserDetailsService {
 			throw new BindException(bindingResult);
 		}
 
+		log.error("DB: {}", request);
+
 		return User.builder().email(request.getEmail())
 				.masterPasswordHash(passwordEncoder.encode(request.getMasterPasswordHash()))
 				.masterPasswordHint(request.getMasterPasswordHint()).name(request.getName())

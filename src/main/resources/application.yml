@@ -1,0 +1,6 @@
+spring:
+  application:
+    name: Secure Vault
+  profiles:
+    active:
+      - development

@@ -13,8 +13,6 @@ import org.springframework.web.servlet.mvc.condition.RequestCondition;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import com.securevault.main.dto.annotation.ApiVersion;
-
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

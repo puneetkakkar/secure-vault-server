@@ -1,5 +1,6 @@
 package com.securevault.main.entity;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -54,5 +55,10 @@ public class User extends AbstractUuidIdentified {
 	@DBRef
 	@Builder.Default
 	private List<Role> roles = new ArrayList<>();
+
+	@DBRef
+	private EmailVerificationToken emailVerificationToken;
+
+	private LocalDateTime emailVerifiedAt;
 
 }

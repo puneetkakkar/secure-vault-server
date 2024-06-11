@@ -19,6 +19,7 @@ import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.exception.RefreshTokenExpiredException;
 import com.securevault.main.security.JwtTokenProvider;
 import com.securevault.main.security.JwtUserDetails;
+import com.securevault.main.util.Constants;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -83,6 +84,20 @@ public class AuthService {
 
 	public TokenResponse refreshFromCookie(final String refreshToken) {
 		return refresh(refreshToken);
+	}
+
+	public void logout(User user, final String bearer) {
+		JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(jwtTokenProvider.extractJwtFromBearerString(bearer));
+
+		if (!user.getId().equals(jwtToken.getUserId())) {
+			log.error("User id: {} is not equal to token user id: {}", user.getId(), jwtToken.getUserId());
+		}
+
+		jwtTokenService.delete(jwtToken);
+	}
+
+	public void logout(User user) {
+		logout(user, httpServletRequest.getHeader(Constants.TOKEN_HEADER));
 	}
 
 	private TokenResponse refresh(final String refreshToken) {

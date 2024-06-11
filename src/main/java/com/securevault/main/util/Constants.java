@@ -8,7 +8,7 @@ import lombok.Getter;;
 public final class Constants {
 	public static final String TOKEN_HEADER = "Authorization";
 	public static final String TOKEN_TYPE = "Bearer";
-	public static final String SECURITY_SCHEME_NAME = "bearerAuth";
+	public static final int EMAIL_VERIFICATION_TOKEN_LENGTH = 64;
 
 	@Getter
 	@AllArgsConstructor

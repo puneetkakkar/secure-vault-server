@@ -3,7 +3,10 @@ package com.securevault.main.service;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +20,7 @@ import org.springframework.validation.FieldError;
 import com.securevault.main.dto.request.auth.RegisterRequest;
 import com.securevault.main.dto.request.user.AbstractBaseCreateUserRequest;
 import com.securevault.main.entity.User;
+import com.securevault.main.event.UserEmailVerificationSendEvent;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.repository.UserRepository;
 import com.securevault.main.security.JwtUserDetails;
@@ -34,6 +38,8 @@ public class UserService implements UserDetailsService {
 	private final RoleService roleService;
 	private final MessageSourceService messageSourceService;
 	private final PasswordEncoder passwordEncoder;
+	private final ApplicationEventPublisher eventPublisher;
+	private final EmailVerficationTokenService emailVerficationTokenService;
 
 	@Override
 	public UserDetails loadUserByUsername(final String email) {
@@ -50,6 +56,25 @@ public class UserService implements UserDetailsService {
 						messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("user") })));
 
 		return JwtUserDetails.create(user);
+	}
+
+	public Authentication getAuthentication() {
+		return SecurityContextHolder.getContext().getAuthentication();
+	}
+
+	public User getUser() {
+		Authentication authentication = getAuthentication();
+		if (authentication.isAuthenticated()) {
+			try {
+				return findById(getPrincipal(authentication).getId());
+			} catch (ClassCastException | NotFoundException e) {
+				log.warn("[JWT] User details not found!");
+				throw new BadCredentialsException(messageSourceService.get("bad_credentials"));
+			}
+		} else {
+			log.warn("[JWT] User not authenticated!");
+			throw new BadCredentialsException(messageSourceService.get("bad_credentials"));
+		}
 	}
 
 	public User findById(UUID id) {
@@ -78,9 +103,16 @@ public class UserService implements UserDetailsService {
 		user.setRoles(List.of(roleService.findByName(Constants.RoleEnum.USER)));
 		userRepository.save(user);
 
+		emailVerificationEventPublisher(user);
+
 		log.info("User registered with email: {}, {}", user.getEmail(), user.getId());
 
 		return user;
+	}
+
+	protected void emailVerificationEventPublisher(User user) {
+		user.setEmailVerificationToken(emailVerficationTokenService.create(user));
+		eventPublisher.publishEvent(new UserEmailVerificationSendEvent(this, user));
 	}
 
 	private User createUser(AbstractBaseCreateUserRequest request) throws BindException {

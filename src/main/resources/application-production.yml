@@ -2,7 +2,10 @@ server:
   error:
     whitelabel:
       enabled: false
+
 spring:
+  application:
+    name: SecretVault
   config:
     activate:
       on-profile:
@@ -27,6 +30,22 @@ spring:
       port: 6379
       password: secret
       timeout: 60000
+  mail:
+    host: localhost
+    port: 1025
+    username: puneetkakkar91@gmail.com
+    password: Puneetpk@1968
+    properties:
+      mail:
+        transport:
+          protocol: smtp
+        smtp:
+          auth: true
+          ssl:
+            enable: false
+          tls:
+            enable: false
+
 logging:
   level:
     root: WARN
@@ -41,8 +60,10 @@ logging:
     rollingpolicy:
       max-file-size: 10MB
       max-history: 10
+
 api:
   uri-prefix: /api
+
 app:
   pbkdf2:
     secret: ==========Secure=PBKDF2=Vault===========
@@ -56,6 +77,13 @@ app:
       expires-in: "#{24 * 60 * 60 * 1000}"
     remember-me:
       expires-in: "#{24 * 60 * 60 * 1000 * 7}"
+  registration:
+    email:
+      token:
+        expires-in: "#{60 * 60 * 1000}"
+  url: "http://localhost:8080"
+  frontend-url: "http://localhost:3000"
+
 cookie:
   refresh:
     domain: "localhost"

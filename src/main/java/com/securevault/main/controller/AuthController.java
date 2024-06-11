@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,6 +54,14 @@ public class AuthController extends AbstractBaseController {
 	@GetMapping("/refresh")
 	public ResponseEntity<TokenResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
 		return ResponseEntity.ok(authService.refreshFromCookie(refreshToken));
+	}
+
+	@GetMapping("/logout")
+	public ResponseEntity<SuccessResponse> logout() {
+		authService.logout(userService.getUser());
+
+		return ResponseEntity
+				.ok(SuccessResponse.builder().message(messageSourceService.get("logout_successfully")).build());
 	}
 
 	@GetMapping("/dummy")

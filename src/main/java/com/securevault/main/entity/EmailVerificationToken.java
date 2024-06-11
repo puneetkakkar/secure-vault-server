@@ -1,6 +1,7 @@
 package com.securevault.main.entity;
 
 import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
@@ -18,10 +19,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "email_verification_tokens")
-public class EmailVerificationToken extends AbstractBaseEntity {
+public class EmailVerificationToken extends AbstractUuidIdentified {
 
 	@Id
-	private String id;
+	private UUID id;
 
 	@DBRef
 	private User user;

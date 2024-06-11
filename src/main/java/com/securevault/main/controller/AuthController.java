@@ -6,6 +6,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -54,6 +55,14 @@ public class AuthController extends AbstractBaseController {
 	@GetMapping("/refresh")
 	public ResponseEntity<TokenResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
 		return ResponseEntity.ok(authService.refreshFromCookie(refreshToken));
+	}
+
+	@GetMapping("/email-verification/{token}")
+	public ResponseEntity<SuccessResponse> emailVerification(@PathVariable("token") final String token) {
+		userService.verifyEmail(token);
+
+		return ResponseEntity
+				.ok(SuccessResponse.builder().message(messageSourceService.get("your_email_is_verified")).build());
 	}
 
 	@GetMapping("/logout")

@@ -1,5 +1,6 @@
 package com.securevault.main.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -110,8 +111,19 @@ public class UserService implements UserDetailsService {
 		return user;
 	}
 
+	public void verifyEmail(String token) {
+		log.info("Verifying e-mail with token: {}", token);
+		User user = emailVerficationTokenService.getUserByToken(token);
+		user.setEmailVerifiedAt(LocalDateTime.now());
+		userRepository.save(user);
+
+		emailVerficationTokenService.deleteByUserId(user.getId());
+		log.info("E-mail verified with token: {}", token);
+	}
+
 	protected void emailVerificationEventPublisher(User user) {
 		user.setEmailVerificationToken(emailVerficationTokenService.create(user));
+		userRepository.save(user);
 		eventPublisher.publishEvent(new UserEmailVerificationSendEvent(this, user));
 	}
 
@@ -126,8 +138,6 @@ public class UserService implements UserDetailsService {
 		if (bindingResult.hasErrors()) {
 			throw new BindException(bindingResult);
 		}
-
-		log.error("DB: {}", request);
 
 		return User.builder().email(request.getEmail())
 				.masterPasswordHash(passwordEncoder.encode(request.getMasterPasswordHash()))

@@ -8,11 +8,11 @@ import org.springframework.data.mongodb.repository.Query;
 
 import com.securevault.main.entity.EmailVerificationToken;
 
-public interface EmailVerificationTokenRepository extends MongoRepository<EmailVerificationToken, String> {
+public interface EmailVerificationTokenRepository extends MongoRepository<EmailVerificationToken, UUID> {
 	Optional<EmailVerificationToken> findByUserId(UUID userId);
 
 	Optional<EmailVerificationToken> findByToken(String token);
 
-	@Query("{'user.id': ?0}")
-	void deleteByUserId(String userId);
+	@Query(value = "{'user.id': ?0}", delete = true)
+	void deleteByUserId(UUID userId);
 }

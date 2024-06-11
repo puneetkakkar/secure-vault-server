@@ -53,12 +53,12 @@ public class User extends AbstractUuidIdentified {
 	private Integer kdfIterations;
 
 	@DBRef
-	@Builder.Default
-	private List<Role> roles = new ArrayList<>();
-
-	@DBRef
 	private EmailVerificationToken emailVerificationToken;
 
 	private LocalDateTime emailVerifiedAt;
+
+	@DBRef
+	@Builder.Default
+	private List<Role> roles = new ArrayList<>();
 
 }

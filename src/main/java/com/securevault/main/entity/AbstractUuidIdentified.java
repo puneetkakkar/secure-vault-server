@@ -7,7 +7,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public abstract class AbstractUuidIdentified extends AbstractBaseEntity {
+public abstract class AbstractUuidIdentified {
 
 	protected UUID id;
 

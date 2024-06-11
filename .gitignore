@@ -4,7 +4,8 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
-sendgrid.env
+dev-env.properties
+env.properties
 
 ### STS ###
 .apt_generated

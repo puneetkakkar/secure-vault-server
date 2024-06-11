@@ -5,8 +5,9 @@ server:
 
 spring:
   application:
-    name: SecretVault
+    name: ${APP_NAME}
   config:
+    import: env.properties
     activate:
       on-profile:
         - production
@@ -20,21 +21,20 @@ spring:
     basename: locales/message
   data:
     mongodb:
-      database: vault
-      host: locallhost
-      port: 27017
+      database: ${MONGO_DATABASE}
+      uri: ${MONGO_URI}
       uuid-representation: standard
     redis:
-      database: 0
-      host: localhost
-      port: 6379
-      password: secret
-      timeout: 60000
+      database: ${REDIS_DATABASE}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: ${REDIS_TIMEOUT}
   mail:
-    host: localhost
-    port: 1025
-    username: puneetkakkar91@gmail.com
-    password: Puneetpk@1968
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         transport:
@@ -44,7 +44,9 @@ spring:
           ssl:
             enable: false
           tls:
-            enable: false
+            enable: true
+          starttls:
+            enable: true
 
 logging:
   level:
@@ -55,39 +57,39 @@ logging:
           service: INFO
     org:
       springframework:
-        security: debug
+        security: trace
   logback:
     rollingpolicy:
       max-file-size: 10MB
       max-history: 10
 
 api:
-  uri-prefix: /api
+  uri-prefix: ${API_URI_PREFIX}
 
 app:
   pbkdf2:
-    secret: ==========Secure=PBKDF2=Vault===========
-    salt-length: 600000
-    iterations: 256
+    secret: ${PBKDF2_SECRET}
+    salt-length: ${PBKDF2_SALT_LENGTH}
+    iterations: ${PBKDF2_ITERATIONS}
   jwt:
-    secret: ==============Secure=Vault==============
+    secret: ${JWT_SECRET}
     token:
-      expires-in: "#{60 * 60 * 1000}"
+      expires-in: ${JWT_TOKEN_EXPIRES_IN}
     refresh-token:
-      expires-in: "#{24 * 60 * 60 * 1000}"
+      expires-in: ${JWT_REFRESH_TOKEN_EXPIRES_IN}
     remember-me:
-      expires-in: "#{24 * 60 * 60 * 1000 * 7}"
+      expires-in: ${JWT_REMEMBER_ME_EXPIRES_IN}
   registration:
     email:
       token:
-        expires-in: "#{60 * 60 * 1000}"
-  url: "http://localhost:8080"
-  frontend-url: "http://localhost:3000"
+        expires-in: ${REGISTRATION_EMAIL_TOKEN_EXPIRES_IN}
+  url: ${SERVER_URL}
+  frontend-url: ${FRONTEND_URL}
 
 cookie:
   refresh:
-    domain: "localhost"
-    path: "/api/v1/auth"
-    sameSite: "strict"
+    domain: ${COOKIE_REFRESH_DOMAIN}
+    path: ${COOKIE_REFRESH_PATH}
+    sameSite: ${COOKIE_REFRESH_SAME_SITE}
     httpOnly: true
-    secure: true
+    secure: false

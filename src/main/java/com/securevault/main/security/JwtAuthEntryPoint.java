@@ -24,43 +24,43 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
-	private final MessageSourceService messageSourceService;
+    private final MessageSourceService messageSourceService;
 
-	private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
-	@Override
-	public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
-			throws IOException, ServletException {
+    @Override
+    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
+            throws IOException, ServletException {
 
-		final String expired = (String) request.getAttribute("expired");
-		final String unsupported = (String) request.getAttribute("unsupported");
-		final String invalid = (String) request.getAttribute("invalid");
-		final String illegal = (String) request.getAttribute("illegal");
-		final String notfound = (String) request.getAttribute("notfound");
-		final String message;
+        final String expired = (String) request.getAttribute("expired");
+        final String unsupported = (String) request.getAttribute("unsupported");
+        final String invalid = (String) request.getAttribute("invalid");
+        final String illegal = (String) request.getAttribute("illegal");
+        final String notfound = (String) request.getAttribute("notfound");
+        final String message;
 
-		if (expired != null) {
-			message = expired;
-		} else if (unsupported != null) {
-			message = unsupported;
-		} else if (invalid != null) {
-			message = invalid;
-		} else if (illegal != null) {
-			message = illegal;
-		} else if (notfound != null) {
-			message = notfound;
-		} else {
-			message = authException.getMessage();
-		}
+        if (expired != null) {
+            message = expired;
+        } else if (unsupported != null) {
+            message = unsupported;
+        } else if (invalid != null) {
+            message = invalid;
+        } else if (illegal != null) {
+            message = illegal;
+        } else if (notfound != null) {
+            message = notfound;
+        } else {
+            message = authException.getMessage();
+        }
 
-		log.error("Could not set user authentication in security context. Error: {}", message);
+        log.error("Could not set user authentication in security context. Error: {}", message);
 
-		ResponseEntity<ErrorResponse> responseEntity = new AppExceptionHandler(messageSourceService)
-				.handleBadCredentialsException(new BadCredentialsException(message));
+        ResponseEntity<ErrorResponse> responseEntity = new AppExceptionHandler()
+                .handleBadCredentialsException(new BadCredentialsException(message));
 
-		response.getWriter().write(objectMapper.writeValueAsString(responseEntity.getBody()));
-		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-	}
+        response.getWriter().write(objectMapper.writeValueAsString(responseEntity.getBody()));
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    }
 
 }

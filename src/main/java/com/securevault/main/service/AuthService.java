@@ -30,136 +30,136 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
-	@Value("${cookie.refresh.domain}")
-	private String cookieDomain;
+    @Value("${cookie.refresh.domain}")
+    private String cookieDomain;
 
-	@Value("${cookie.refresh.path}")
-	private String cookiePath;
+    @Value("${cookie.refresh.path}")
+    private String cookiePath;
 
-	@Value("${cookie.refresh.httpOnly}")
-	private boolean isCookieHttpOnly;
+    @Value("${cookie.refresh.httpOnly}")
+    private boolean isCookieHttpOnly;
 
-	@Value("${cookie.refresh.secure}")
-	private boolean isCookieSecure;
+    @Value("${cookie.refresh.secure}")
+    private boolean isCookieSecure;
 
-	@Value("${cookie.refresh.sameSite}")
-	private String cookieSameSite;
+    @Value("${cookie.refresh.sameSite}")
+    private String cookieSameSite;
 
-	private final AuthenticationManager authenticationManager;
-	private final UserService userService;
-	private final JwtTokenService jwtTokenService;
-	private final JwtTokenProvider jwtTokenProvider;
-	private final HttpServletRequest httpServletRequest;
-	private final HttpServletResponse httpServletResponse;
-	private final MessageSourceService messageSourceService;
+    private final AuthenticationManager authenticationManager;
+    private final UserService userService;
+    private final JwtTokenService jwtTokenService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final HttpServletRequest httpServletRequest;
+    private final HttpServletResponse httpServletResponse;
+    private final MessageSourceService messageSourceService;
 
-	public TokenResponse login(String email, final String masterPasswordHash, final Boolean rememberMe) {
-		log.info("login request received: {}", email);
+    public TokenResponse login(String email, final String masterPasswordHash, final Boolean rememberMe) {
+        log.info("login request received: {}", email);
 
-		String badCredentialsMessage = messageSourceService.get("bad_credentials");
+        String badCredentialsMessage = messageSourceService.get("bad_credentials");
 
-		try {
-			User user = userService.findByEmail(email);
-			email = user.getEmail();
-		} catch (Exception e) {
-			log.error("User not found with email: {}", email);
-			throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
-		}
+        try {
+            User user = userService.findByEmail(email);
+            email = user.getEmail();
+        } catch (Exception e) {
+            log.error("User not found with email: {}", email);
+            throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
+        }
 
-		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email,
-				masterPasswordHash);
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email,
+                masterPasswordHash);
 
-		try {
-			Authentication authentication = authenticationManager.authenticate(authenticationToken);
-			JwtUserDetails user = jwtTokenProvider.getPrincipal(authentication);
+        try {
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
+            JwtUserDetails user = jwtTokenProvider.getPrincipal(authentication);
 
-			UUID uuid = UUID.fromString(user.getId());
+            UUID uuid = UUID.fromString(user.getId());
 
-			return generateToken(uuid, rememberMe);
-		} catch (NotFoundException e) {
-			log.error("Authentication failed for email: {}", email);
-			throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
-		}
-	}
+            return generateToken(uuid, rememberMe);
+        } catch (NotFoundException e) {
+            log.error("Authentication failed for email: {}", email);
+            throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
+        }
+    }
 
-	public TokenResponse refreshFromCookie(final String refreshToken) {
-		return refresh(refreshToken);
-	}
+    public TokenResponse refreshFromCookie(final String refreshToken) {
+        return refresh(refreshToken);
+    }
 
-	public void logout(User user, final String bearer) {
-		JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(jwtTokenProvider.extractJwtFromBearerString(bearer));
+    public void logout(User user, final String bearer) {
+        JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(jwtTokenProvider.extractJwtFromBearerString(bearer));
 
-		if (!user.getId().equals(jwtToken.getUserId())) {
-			log.error("User id: {} is not equal to token user id: {}", user.getId(), jwtToken.getUserId());
-		}
+        if (!user.getId().equals(jwtToken.getUserId())) {
+            log.error("User id: {} is not equal to token user id: {}", user.getId(), jwtToken.getUserId());
+        }
 
-		jwtTokenService.delete(jwtToken);
-	}
+        jwtTokenService.delete(jwtToken);
+    }
 
-	public void logout(User user) {
-		logout(user, httpServletRequest.getHeader(Constants.TOKEN_HEADER));
-	}
+    public void logout(User user) {
+        logout(user, httpServletRequest.getHeader(Constants.TOKEN_HEADER));
+    }
 
-	private TokenResponse refresh(final String refreshToken) {
-		log.info("Refresh request received: {}", refreshToken);
+    private TokenResponse refresh(final String refreshToken) {
+        log.info("Refresh request received: {}", refreshToken);
 
-		if (!jwtTokenProvider.validateToken(refreshToken)) {
-			log.error("Refresh token is expired.");
-			JwtToken refreshJwtToken = jwtTokenProvider.getTokenOrRefreshToken(refreshToken);
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            log.error("Refresh token is expired.");
+            JwtToken refreshJwtToken = jwtTokenProvider.getTokenOrRefreshToken(refreshToken);
 
-			if (refreshJwtToken != null) {
-				jwtTokenService.delete(refreshJwtToken);
-			}
+            if (refreshJwtToken != null) {
+                jwtTokenService.delete(refreshJwtToken);
+            }
 
-			throw new RefreshTokenExpiredException();
-		}
+            throw new RefreshTokenExpiredException();
+        }
 
-		User user = jwtTokenProvider.getUserFromToken(refreshToken);
-		JwtToken oldToken = jwtTokenService.findByUserIdAndRefreshToken(user.getId(), refreshToken);
-		if (oldToken != null && oldToken.getRememberMe()) {
-			jwtTokenProvider.setRememberMe();
-		}
+        User user = jwtTokenProvider.getUserFromToken(refreshToken);
+        JwtToken oldToken = jwtTokenService.findByUserIdAndRefreshToken(user.getId(), refreshToken);
+        if (oldToken != null && oldToken.getRememberMe()) {
+            jwtTokenProvider.setRememberMe();
+        }
 
-		boolean rememberMe = false;
-		if (oldToken != null) {
-			rememberMe = oldToken.getRememberMe();
-			jwtTokenService.delete(oldToken);
-		}
+        boolean rememberMe = false;
+        if (oldToken != null) {
+            rememberMe = oldToken.getRememberMe();
+            jwtTokenService.delete(oldToken);
+        }
 
-		return generateToken(user.getId(), rememberMe);
-	}
+        return generateToken(user.getId(), rememberMe);
+    }
 
-	private TokenResponse generateToken(final UUID id, final Boolean rememberMe) {
-		String token = jwtTokenProvider.generateJwt(id.toString());
-		String refreshToken = jwtTokenProvider.generateRefresh(id.toString());
+    private TokenResponse generateToken(final UUID id, final Boolean rememberMe) {
+        String token = jwtTokenProvider.generateJwt(id.toString());
+        String refreshToken = jwtTokenProvider.generateRefresh(id.toString());
 
-		if (rememberMe) {
-			jwtTokenProvider.setRememberMe();
-		}
+        if (rememberMe) {
+            jwtTokenProvider.setRememberMe();
+        }
 
-		jwtTokenService
-				.save(JwtToken.builder().userId(id).token(token).refreshToken(refreshToken).rememberMe(rememberMe)
-						.ipAddress(httpServletRequest.getRemoteAddr()).userAgent(httpServletRequest.getHeader("User-Agent"))
-						.tokenTimeToLive(jwtTokenProvider.getRefreshTokenExpiresIn())
-						.build());
+        jwtTokenService
+                .save(JwtToken.builder().userId(id).token(token).refreshToken(refreshToken).rememberMe(rememberMe)
+                        .ipAddress(httpServletRequest.getRemoteAddr()).userAgent(httpServletRequest.getHeader("User-Agent"))
+                        .tokenTimeToLive(jwtTokenProvider.getRefreshTokenExpiresIn())
+                        .build());
 
-		log.info("Token generated for user: {}", id);
+        log.info("Token generated for user: {}", id);
 
-		// Set the refresh token as an HttpOnly cookie
-		int maxAgeInSeconds = (int) Math.min(jwtTokenProvider.getRefreshTokenExpiresIn(), Integer.MAX_VALUE);
+        // Set the refresh token as an HttpOnly cookie
+        int maxAgeInSeconds = (int) Math.min(jwtTokenProvider.getRefreshTokenExpiresIn(), Integer.MAX_VALUE);
 
-		ResponseCookie jwtCookie = ResponseCookie.from("refreshToken", refreshToken).domain(cookieDomain).path(cookiePath)
-				.httpOnly(isCookieHttpOnly).secure(isCookieSecure).sameSite(cookieSameSite).maxAge(maxAgeInSeconds).build();
+        ResponseCookie jwtCookie = ResponseCookie.from("refreshToken", refreshToken).domain(cookieDomain).path(cookiePath)
+                .httpOnly(isCookieHttpOnly).secure(isCookieSecure).sameSite(cookieSameSite).maxAge(maxAgeInSeconds).build();
 
-		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
 
-		return TokenResponse.builder()
-				.token(token)
-				.expiresIn(
-						TokenExpiresInResponse.builder()
-								.token(jwtTokenProvider.getTokenExpiresIn())
-								.build())
-				.build();
-	}
+        return TokenResponse.builder()
+                .token(token)
+                .expiresIn(
+                        TokenExpiresInResponse.builder()
+                                .token(jwtTokenProvider.getTokenExpiresIn())
+                                .build())
+                .build();
+    }
 
 }

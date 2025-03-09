@@ -12,6 +12,8 @@ spring:
       on-profile:
         - development
   devtools:
+    livereload:
+      enabled: true
     restart:
       enabled: true
   docker:

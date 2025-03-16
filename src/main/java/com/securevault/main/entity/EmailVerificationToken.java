@@ -19,15 +19,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "email_verification_tokens")
-public class EmailVerificationToken extends AbstractUuidIdentified {
+public class EmailVerificationToken extends AbstractBaseEntity {
+    
+    @DBRef
+    private User user;
 
-	@Id
-	private UUID id;
+    private String token;
 
-	@DBRef
-	private User user;
-
-	private String token;
-
-	private Date expirationDate;
+    private Date expirationDate;
 }

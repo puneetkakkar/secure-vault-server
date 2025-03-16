@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -30,32 +31,22 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
-            throws IOException, ServletException {
+            throws IOException {
 
-        final String expired = (String) request.getAttribute("expired");
-        final String unsupported = (String) request.getAttribute("unsupported");
-        final String invalid = (String) request.getAttribute("invalid");
-        final String illegal = (String) request.getAttribute("illegal");
-        final String notfound = (String) request.getAttribute("notfound");
+
+        final String access_denied = (String) request.getAttribute("access_denied");
         final String message;
 
-        if (expired != null) {
-            message = expired;
-        } else if (unsupported != null) {
-            message = unsupported;
-        } else if (invalid != null) {
-            message = invalid;
-        } else if (illegal != null) {
-            message = illegal;
-        } else if (notfound != null) {
-            message = notfound;
+
+        if (access_denied != null) {
+            message = messageSourceService.get("access_denied");
         } else {
-            message = authException.getMessage();
+            message = messageSourceService.get("unexpected_exception");
         }
 
-        log.error("Could not set user authentication in security context. Error: {}", message);
+        log.error("Could not set user authentication in security context. Error: {}", authException.getMessage());
 
-        ResponseEntity<ErrorResponse> responseEntity = new AppExceptionHandler()
+        ResponseEntity<ErrorResponse> responseEntity = new AppExceptionHandler(messageSourceService)
                 .handleBadCredentialsException(new BadCredentialsException(message));
 
         response.getWriter().write(objectMapper.writeValueAsString(responseEntity.getBody()));

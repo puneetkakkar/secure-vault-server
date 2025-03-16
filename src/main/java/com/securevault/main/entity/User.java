@@ -26,39 +26,36 @@ import lombok.Setter;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User extends AbstractUuidIdentified {
+public class User extends AbstractBaseEntity {
+    
+    @NotBlank
+    @Size(max = 20)
+    @Email
+    private String email;
 
-	@Id
-	private UUID id;
+    @NotBlank
+    private String masterPasswordHash;
 
-	@NotBlank
-	@Size(max = 20)
-	@Email
-	private String email;
+    @NotBlank
+    private String masterPasswordHint;
 
-	@NotBlank
-	private String masterPasswordHash;
+    @NotBlank
+    private String userKey;
 
-	@NotBlank
-	private String masterPasswordHint;
+    @NotBlank
+    private String name;
 
-	@NotBlank
-	private String userKey;
+    @Min(600000)
+    @Positive
+    private Integer kdfIterations;
 
-	@NotBlank
-	private String name;
+    @DBRef
+    private EmailVerificationToken emailVerificationToken;
 
-	@Min(600000)
-	@Positive
-	private Integer kdfIterations;
+    private LocalDateTime emailVerifiedAt;
 
-	@DBRef
-	private EmailVerificationToken emailVerificationToken;
-
-	private LocalDateTime emailVerifiedAt;
-
-	@DBRef
-	@Builder.Default
-	private List<Role> roles = new ArrayList<>();
+    @DBRef
+    @Builder.Default
+    private List<Role> roles = new ArrayList<>();
 
 }

@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,40 +24,41 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-	private final JwtTokenProvider jwtTokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
 
-	private final UserService userService;
+    private final UserService userService;
 
-	public JwtAuthenticationFilter(@Lazy JwtTokenProvider jwtTokenProvider, @Lazy UserService userService) {
-		this.jwtTokenProvider = jwtTokenProvider;
-		this.userService = userService;
-	}
+    public JwtAuthenticationFilter(@Lazy JwtTokenProvider jwtTokenProvider, @Lazy UserService userService) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userService = userService;
+    }
 
-	@Override
-	protected final void doFilterInternal(@NonNull final HttpServletRequest request,
-			@NonNull final HttpServletResponse response, @NonNull final FilterChain filterChain)
-			throws ServletException, IOException {
+    @Override
+    protected final void doFilterInternal(@NonNull final HttpServletRequest request,
+                                          @NonNull final HttpServletResponse response, @NonNull final FilterChain filterChain)
+            throws ServletException, IOException {
 
-		String token = jwtTokenProvider.extractJwtFromRequest(request);
 
-		/**
-		 * Performing authentication of the user based on the
-		 * information extracted from the token provided.
-		 */
-		if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token, request)) {
-			String id = jwtTokenProvider.getUserIdFromToken(token);
-			UserDetails user = userService.loadUserById(id);
+        String token = jwtTokenProvider.extractJwtFromRequest(request);
 
-			if (Objects.nonNull(user) && SecurityContextHolder.getContext().getAuthentication() == null) {
-				UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
-						user.getAuthorities());
-				SecurityContextHolder.getContext().setAuthentication(auth);
-			}
-		}
+        try {
+            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token, request)) {
+                String id = jwtTokenProvider.getUserIdFromToken(token);
+                UserDetails user = userService.loadUserById(id);
 
-		filterChain.doFilter(request, response);
+                if (Objects.nonNull(user) && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
+                            user.getAuthorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
+            }
 
-		log.info(request.getRemoteAddr());
-	}
+            filterChain.doFilter(request, response);
+        } catch (AccessDeniedException e) {
+            throw new AccessDeniedException(e.getMessage());
+        }
+
+        log.info(request.getRemoteAddr());
+    }
 
 }

@@ -2,26 +2,17 @@ package com.securevault.main.configuration;
 
 import java.nio.charset.StandardCharsets;
 
-import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
-import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import org.thymeleaf.spring6.templateresolver.SpringResourceTemplateResolver;
 import org.thymeleaf.templatemode.TemplateMode;
 
-import com.securevault.main.event.UuidIdentifiedEntityEventListener;
-
 @Configuration
 public class AppConfiguration {
-
-    @Bean
-    public UuidIdentifiedEntityEventListener uuidIdentifiedEntityEventListener() {
-        return new UuidIdentifiedEntityEventListener();
-    }
 
     /**
      * Simple application event multicaster bean.

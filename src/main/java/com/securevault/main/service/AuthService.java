@@ -111,7 +111,7 @@ public class AuthService {
                 jwtTokenService.delete(refreshJwtToken);
             }
 
-            throw new RefreshTokenExpiredException();
+            throw new RefreshTokenExpiredException(messageSourceService.get("access_denied"));
         }
 
         User user = jwtTokenProvider.getUserFromToken(refreshToken);

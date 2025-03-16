@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @Setter
 public abstract class AbstractBaseResponse {
-    protected int status;
+    protected String status;
 
     protected AbstractBaseResponse() {
     }

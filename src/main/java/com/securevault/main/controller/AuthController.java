@@ -1,5 +1,7 @@
 package com.securevault.main.controller;
 
+import com.securevault.main.enums.ResponseStatus;
+import com.securevault.main.util.ApiEndpoints;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.annotation.Validated;
@@ -29,59 +31,64 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @CrossOrigin(origins = "*", maxAge = 3600)
 @RestController
-@RequestMapping("/auth")
+@RequestMapping(ApiEndpoints.AUTH_BASE_URL)
 @ApiVersion("1")
 @RequiredArgsConstructor
 public class AuthController extends AbstractBaseController {
-	private final AuthService authService;
-	private final UserService userService;
-	private final MessageSourceService messageSourceService;
+    private final AuthService authService;
+    private final UserService userService;
+    private final MessageSourceService messageSourceService;
 
-	@PostMapping("/register")
-	public ResponseEntity<SuccessResponse> register(@RequestBody @Valid RegisterRequest request) throws BindException {
-		userService.register(request);
+    @PostMapping(ApiEndpoints.AUTH_REGISTER_URL)
+    public ResponseEntity<SuccessResponse> register(@RequestBody @Valid RegisterRequest request) throws BindException {
+        userService.register(request);
 
-		return ResponseEntity
-				.ok(SuccessResponse.builder().message(messageSourceService.get("registered_successfully")).build());
-	}
+        return ResponseEntity
+                .ok(SuccessResponse.builder().status(ResponseStatus.SUCCESS.getValue()).message(messageSourceService.get("registered_successfully")).build());
+    }
 
-	@PostMapping("/login")
-	public ResponseEntity<TokenResponse> login(@RequestBody @Validated final LoginRequest request) {
+    @PostMapping(ApiEndpoints.AUTH_LOGIN_URL)
+    public ResponseEntity<TokenResponse> login(@RequestBody @Validated final LoginRequest request) {
 
-		return ResponseEntity
-				.ok(authService.login(request.getEmail(), request.getMasterPasswordHash(), request.getRememberMe()));
-	}
+        TokenResponse loginTokenResponse = authService.login(request.getEmail(), request.getMasterPasswordHash(), request.getRememberMe());
+        loginTokenResponse.setStatus(ResponseStatus.SUCCESS.getValue());
 
-	@GetMapping("/refresh")
-	public ResponseEntity<TokenResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
-		return ResponseEntity.ok(authService.refreshFromCookie(refreshToken));
-	}
+        return ResponseEntity.ok(loginTokenResponse);
+    }
 
-	@GetMapping("/email-verification/{token}")
-	public ResponseEntity<SuccessResponse> emailVerification(@PathVariable("token") final String token) {
-		userService.verifyEmail(token);
+    @GetMapping(ApiEndpoints.AUTH_REFRESH_TOKEN_URL)
+    public ResponseEntity<TokenResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
+        TokenResponse refreshTokenResponse = authService.refreshFromCookie(refreshToken);
+        refreshTokenResponse.setStatus(ResponseStatus.SUCCESS.getValue());
 
-		return ResponseEntity
-				.ok(SuccessResponse.builder().message(messageSourceService.get("your_email_is_verified")).build());
-	}
+        return ResponseEntity.ok(refreshTokenResponse);
+    }
 
-	@GetMapping("/logout")
-	public ResponseEntity<SuccessResponse> logout() {
-		authService.logout(userService.getUser());
+    @GetMapping(ApiEndpoints.AUTH_EMAIL_VERIFICATION_URL)
+    public ResponseEntity<SuccessResponse> emailVerification(@PathVariable("token") final String token) {
+        userService.verifyEmail(token);
 
-		return ResponseEntity
-				.ok(SuccessResponse.builder().message(messageSourceService.get("logout_successfully")).build());
-	}
+        return ResponseEntity
+                .ok(SuccessResponse.builder().status(ResponseStatus.SUCCESS.getValue()).message(messageSourceService.get("your_email_is_verified")).build());
+    }
 
-	@GetMapping("/dummy")
-	public String hello1(@RequestParam(value = "name", defaultValue = "Java") String name) {
-		return String.format("Yay! Hello %s V1!", name);
-	}
+    @GetMapping(ApiEndpoints.AUTH_LOGOUT_URL)
+    public ResponseEntity<SuccessResponse> logout() {
+        authService.logout(userService.getUser());
 
-	@GetMapping("/dummy")
-	@ApiVersion("2")
-	public String hello2(@RequestParam(value = "name", defaultValue = "Java") String name) {
-		return String.format("Yay! Hello %s V2!", name);
-	}
+        return ResponseEntity
+                .ok(SuccessResponse.builder().status(ResponseStatus.SUCCESS.getValue()).message(messageSourceService.get("logout_successfully")).build());
+    }
+
+    @GetMapping("/dummy")
+    public String hello1(@RequestParam(value = "name", defaultValue = "Java") String name) {
+        return String.format("Yay! Hello %s V1!", name);
+    }
+
+    @GetMapping("/dummy")
+    @ApiVersion("2")
+    public String hello2(@RequestParam(value = "name", defaultValue = "Java") String name) {
+        return String.format("Yay! Hello %s V2!", name);
+    }
 
 }

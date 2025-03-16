@@ -1,5 +1,6 @@
 package com.securevault.main.dto.response;
 
+import com.securevault.main.enums.ErrorCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -10,7 +11,7 @@ import java.time.Instant;
 @Setter
 @SuperBuilder
 public class ErrorResponse extends AbstractBaseResponse {
-    private String error;
+    private ErrorCode code;
     private String message;
     private Instant timestamp;
 }

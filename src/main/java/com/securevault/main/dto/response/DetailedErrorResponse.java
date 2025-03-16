@@ -1,5 +1,6 @@
 package com.securevault.main.dto.response;
 
+import java.util.List;
 import java.util.Map;
 
 import lombok.Getter;
@@ -10,5 +11,5 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 public class DetailedErrorResponse extends ErrorResponse {
-	private Map<String, String> items;
+    private List<Map<String, String>> errors;
 }

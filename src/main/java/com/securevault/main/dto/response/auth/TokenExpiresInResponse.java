@@ -9,6 +9,6 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-public class TokenExpiresInResponse extends AbstractBaseResponse {
-	private Long token;
+public class TokenExpiresInResponse {
+    private Long token;
 }

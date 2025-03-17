@@ -202,11 +202,6 @@ public class JwtTokenProvider {
         }
     }
 
-    private void logAndThrowAccessDenied(String message, HttpServletRequest httpServletRequest, String accessDeniedMessage) {
-        logErrorAndSetAttribute(message, httpServletRequest, accessDeniedMessage);
-        throw new AccessDeniedException(accessDeniedMessage);
-    }
-
     private void logAndThrowAccessDenied(String message, HttpServletRequest httpServletRequest, String accessDeniedMessage, Exception e) {
         logErrorAndSetAttribute(message, httpServletRequest, accessDeniedMessage);
         throw new AccessDeniedException(e.getMessage());

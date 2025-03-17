@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.securevault.main.enums.ErrorCode;
 import com.securevault.main.enums.ResponseStatus;
 import com.securevault.main.service.MessageSourceService;
@@ -48,22 +50,26 @@ public class AppExceptionHandler {
     @ExceptionHandler(BindException.class)
     public final ResponseEntity<ErrorResponse> handleBindException(final BindException e) {
         log.error(e.toString(), e.getMessage());
-        List<Map<String, String>> errors = new ArrayList<>();
+
+        Map<String, List<Map<String, String>>> fieldErrors = new HashMap<>();
 
         e.getBindingResult().getAllErrors().forEach((error) -> {
-            Map<String, String> errorInfo = new HashMap<>();
-
             String fieldName = ((FieldError) error).getField();
-            String value = (String) ((FieldError) error).getRejectedValue();
+            Object rejectedValue = ((FieldError) error).getRejectedValue();
             String message = error.getDefaultMessage();
-            errorInfo.put("field", fieldName);
-            errorInfo.put("value", value);
-            errorInfo.put("message", message);
 
-            errors.add(errorInfo);
+            String value = handleRejectedValue(rejectedValue);
+
+            Map<String, String> errorInfo = new HashMap<>();
+            errorInfo.put("message", message);
+            errorInfo.put("value", value != null ? value : "null");
+
+            fieldErrors
+                    .computeIfAbsent(fieldName, k -> new ArrayList<>())
+                    .add(errorInfo);
         });
 
-        return build(HttpStatus.UNPROCESSABLE_ENTITY, ErrorCode.UNPROCESSABLE_ENTITY, messageSourceService.get("validation_error"), errors);
+        return build(HttpStatus.UNPROCESSABLE_ENTITY, ErrorCode.UNPROCESSABLE_ENTITY, messageSourceService.get("validation_error"), fieldErrors);
     }
 
     @ExceptionHandler({
@@ -111,6 +117,24 @@ public class AppExceptionHandler {
         return build(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, e.getMessage());
     }
 
+    private String handleRejectedValue(Object rejectedValue) {
+        if (rejectedValue == null) {
+            return null;
+        }
+
+        if (rejectedValue instanceof String) {
+            return (String) rejectedValue;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            return objectMapper.writeValueAsString(rejectedValue);
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing rejectedValue", e);
+            return rejectedValue.toString();
+        }
+    }
+
     /**
      * Build error response
      *
@@ -119,7 +143,7 @@ public class AppExceptionHandler {
      * @return ResponseEntity
      */
     private ResponseEntity<ErrorResponse> build(final HttpStatus httpStatus, final ErrorCode errorCode, final String message,
-                                                final List<Map<String, String>> errors) {
+                                                final Map<String, List<Map<String, String>>> errors) {
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .code(errorCode)
@@ -152,7 +176,7 @@ public class AppExceptionHandler {
      * @return ResponsEntity
      */
     private ResponseEntity<ErrorResponse> build(final HttpStatus httpStatus, final ErrorCode errorCode, final String message) {
-        List<Map<String, String>> errors = new ArrayList<>();
+        Map<String, List<Map<String, String>>> errors = new HashMap<>();
 
         return build(httpStatus, errorCode, message, errors);
     }

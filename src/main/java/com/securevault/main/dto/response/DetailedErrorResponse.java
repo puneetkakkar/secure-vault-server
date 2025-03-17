@@ -11,5 +11,5 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @SuperBuilder
 public class DetailedErrorResponse extends ErrorResponse {
-    private List<Map<String, String>> errors;
+    private Map<String, List<Map<String, String>>> errors;
 }

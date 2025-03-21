@@ -52,14 +52,14 @@ spring:
 
 logging:
   level:
-    root: WARN
+    root: INFO
     com:
       securevault:
         main:
-          service: INFO
+          service: DEBUG
     org:
       springframework:
-        security: trace
+        security: ERROR
   logback:
     rollingpolicy:
       max-file-size: 10MB

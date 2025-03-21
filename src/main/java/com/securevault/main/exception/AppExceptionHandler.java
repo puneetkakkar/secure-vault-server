@@ -28,6 +28,7 @@ import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
@@ -115,6 +116,12 @@ public class AppExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public final ResponseEntity<ErrorResponse> handleAccessDeniedException(final Exception e) {
         return build(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, e.getMessage());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public final ResponseEntity<ErrorResponse> handleAllExceptions(final Exception e, WebRequest request) {
+        log.error("Exception occurred: {}, Request Details: {}", e.getMessage(), request.getDescription(false), e);
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_SERVER_ERROR, messageSourceService.get("server_error"));
     }
 
     private String handleRejectedValue(Object rejectedValue) {

@@ -1,5 +1,6 @@
 package com.securevault.main.entity;
 
+import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -41,4 +42,12 @@ public class JwtToken {
 
 	@TimeToLive(unit = TimeUnit.MILLISECONDS)
 	private Long tokenTimeToLive;
+
+	public boolean isExpired() {
+		return getExpirationDate().before(new Date());
+	}
+
+	public Date getExpirationDate() {
+		return new Date(System.currentTimeMillis() + tokenTimeToLive);
+	}
 }

@@ -1,9 +1,7 @@
 package com.securevault.main.entity;
 
 import java.util.Date;
-import java.util.UUID;
 
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -20,11 +18,14 @@ import lombok.Setter;
 @AllArgsConstructor
 @Document(collection = "email_verification_tokens")
 public class EmailVerificationToken extends AbstractBaseEntity {
-    
-    @DBRef
-    private User user;
 
-    private String token;
+	@DBRef
+	private User user;
 
-    private Date expirationDate;
+	private String token;
+	private Date expirationDate;
+
+	public boolean isExpired() {
+		return expirationDate.before(new Date());
+	}
 }

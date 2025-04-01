@@ -12,6 +12,7 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import com.securevault.main.entity.User;
+import com.securevault.main.exception.EmailSendingException;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.InternetAddress;
@@ -22,21 +23,16 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MailSenderService {
 	private static final String NAME = "name";
-
 	private static final String URL = "url";
+	private static final String EMAIL_TEMPLATE = "mail/user-email-verification";
+	private static final String EMAIL_VERIFICATION_PATH = "/auth/email-verification/";
 
 	private final String appName;
-
 	private final String appUrl;
-
 	private final String frontendUrl;
-
 	private final String senderAddress;
-
 	private final MessageSourceService messageSourceService;
-
 	private final JavaMailSender mailSender;
-
 	private final SpringTemplateEngine templateEngine;
 
 	/**
@@ -70,65 +66,67 @@ public class MailSenderService {
 	/**
 	 * Send user email verification link.
 	 *
-	 * @param user User
+	 * @param user User to send verification email to
+	 * @throws EmailSendingException if email sending fails
 	 */
 	public void sendUserEmailVerification(User user) {
+		if (user == null || user.getEmail() == null || user.getEmailVerificationToken() == null) {
+			throw new IllegalArgumentException("User, email, or verification token is null");
+		}
+
 		try {
-			log.info(String.format("[EmailService] Sending verification e-mail: %s - %s - %s",
-					user.getId(), user.getEmail(), user.getEmailVerificationToken().getToken()));
+			log.info("[EmailService] Preparing to send verification email to user: {} ({})",
+					user.getId(), user.getEmail());
 
-			String url = String.format("%s/auth/email-verification/%s", frontendUrl,
-					user.getEmailVerificationToken().getToken());
-
-			final Context ctx = createContext();
-			ctx.setVariable(NAME, user.getName());
-			ctx.setVariable(URL, url);
+			String verificationUrl = buildVerificationUrl(user.getEmailVerificationToken().getToken());
+			Context emailContext = createEmailContext(user.getName(), verificationUrl);
 
 			String subject = messageSourceService.get("email_verification");
-			send(new InternetAddress(senderAddress, appName), new InternetAddress(user.getEmail(), user.getName()),
-					subject, templateEngine.process("mail/user-email-verification", ctx));
+			sendEmail(user, subject, emailContext);
 
-			log.info(String.format("[EmailService] Sent verification e-mail: %s - %s",
-					user.getId(), user.getEmail()));
-		} catch (UnsupportedEncodingException | MessagingException | MailException e) {
-			log.error(String.format("[EmailService] Failed to send verification e-mail: %s", e.getMessage()));
+			log.info("[EmailService] Successfully sent verification email to user: {} ({})",
+					user.getId(), user.getEmail());
+		} catch (Exception e) {
+			String errorMessage = String.format("[EmailService] Failed to send verification email to user: %s (%s)",
+					user.getId(), user.getEmail());
+			log.error(errorMessage, e);
+			throw new EmailSendingException(messageSourceService.get("email_verification_failed"), e);
 		}
 	}
 
 	/**
-	 * Create context for template engine.
-	 *
-	 * @return Context
+	 * Build the verification URL for the email
 	 */
-	private Context createContext() {
-		final Context ctx = new Context(LocaleContextHolder.getLocale());
-		ctx.setVariable("SENDER_ADDRESS", senderAddress);
-		ctx.setVariable("APP_NAME", appName);
-		ctx.setVariable("APP_URL", appUrl);
-		ctx.setVariable("FRONTEND_URL", frontendUrl);
-
-		return ctx;
+	private String buildVerificationUrl(String token) {
+		return String.format("%s%s%s", frontendUrl, EMAIL_VERIFICATION_PATH, token);
 	}
 
 	/**
-	 * Send an e-mail to the specified address.
-	 *
-	 * @param from    Address who sent
-	 * @param to      Address who receive
-	 * @param subject String subject
-	 * @param text    String message
-	 * @throws MessagingException when sending fails
+	 * Create context for email template
 	 */
-	private void send(InternetAddress from,
-			InternetAddress to,
-			String subject,
-			String text) throws MessagingException, MailException {
+	private Context createEmailContext(String userName, String verificationUrl) {
+		Context context = new Context(LocaleContextHolder.getLocale());
+		context.setVariable(NAME, userName);
+		context.setVariable(URL, verificationUrl);
+		context.setVariable("SENDER_ADDRESS", senderAddress);
+		context.setVariable("APP_NAME", appName);
+		context.setVariable("APP_URL", appUrl);
+		context.setVariable("FRONTEND_URL", frontendUrl);
+		return context;
+	}
+
+	/**
+	 * Send the email
+	 */
+	private void sendEmail(User user, String subject, Context context)
+			throws MessagingException, MailException, UnsupportedEncodingException {
 		MimeMessage mimeMessage = mailSender.createMimeMessage();
-		MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
-		mimeMessageHelper.setFrom(from);
-		mimeMessageHelper.setTo(to);
-		mimeMessageHelper.setSubject(subject);
-		mimeMessageHelper.setText(text, true);
+		MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+
+		helper.setFrom(new InternetAddress(senderAddress, appName));
+		helper.setTo(new InternetAddress(user.getEmail(), user.getName()));
+		helper.setSubject(subject);
+		helper.setText(templateEngine.process(EMAIL_TEMPLATE, context), true);
 
 		mailSender.send(mimeMessage);
 	}

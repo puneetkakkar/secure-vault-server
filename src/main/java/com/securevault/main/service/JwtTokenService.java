@@ -28,6 +28,12 @@ public class JwtTokenService {
 				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("token") })));
 	}
 
+	public boolean isValid(String token) {
+		return jwtTokenRepository.findByTokenOrRefreshToken(token, token)
+				.map(jwtToken -> !jwtToken.isExpired())
+				.orElse(false);
+	}
+
 	/**
 	 * Save a JWT token
 	 * 
@@ -35,6 +41,7 @@ public class JwtTokenService {
 	 */
 	public void save(JwtToken jwtToken) {
 		jwtTokenRepository.save(jwtToken);
+		log.info("Saved token for user: {}", jwtToken.getUserId());
 	}
 
 	public void delete(JwtToken jwtToken) {

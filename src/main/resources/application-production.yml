@@ -53,15 +53,26 @@ logging:
     root: WARN
     com:
       securevault:
-        main:
-          service: INFO
+        main: INFO
+        main.service: INFO
+        main.controller: INFO
+        main.util: INFO
     org:
       springframework:
-        security: trace
+        security: WARN
+        web: WARN
+        data: WARN
+        mail: INFO
+    mongodb: WARN
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr([%thread]){magenta} %clr(%-5level) %clr(%logger{36}){cyan} - %msg%n"
+  file:
+    name: logs/secure-vault.log
   logback:
     rollingpolicy:
       max-file-size: 10MB
-      max-history: 10
+      max-history: 30
+      total-size-cap: 100MB
 
 api:
   uri-prefix: ${API_URI_PREFIX}

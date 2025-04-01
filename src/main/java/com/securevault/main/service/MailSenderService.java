@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -24,8 +25,11 @@ import lombok.extern.slf4j.Slf4j;
 public class MailSenderService {
 	private static final String NAME = "name";
 	private static final String URL = "url";
+	private static final String LOGO_URL = "logoUrl";
 	private static final String EMAIL_TEMPLATE = "mail/user-email-verification";
 	private static final String EMAIL_VERIFICATION_PATH = "/auth/email-verification/";
+	private static final String LOGO_IMAGE_PATH = "static/images/secure-vault-logo-1x.png";
+	private static final String LOGO_CID = "logo";
 
 	private final String appName;
 	private final String appUrl;
@@ -75,21 +79,14 @@ public class MailSenderService {
 		}
 
 		try {
-			log.info("[EmailService] Preparing to send verification email to user: {} ({})",
-					user.getId(), user.getEmail());
-
+			log.info("Preparing to send verification email to: {}", user.getEmail());
 			String verificationUrl = buildVerificationUrl(user.getEmailVerificationToken().getToken());
 			Context emailContext = createEmailContext(user.getName(), verificationUrl);
-
-			String subject = messageSourceService.get("email_verification");
+			String subject = messageSourceService.get("email_verification_subject");
 			sendEmail(user, subject, emailContext);
-
-			log.info("[EmailService] Successfully sent verification email to user: {} ({})",
-					user.getId(), user.getEmail());
+			log.info("Verification email sent successfully to: {}", user.getEmail());
 		} catch (Exception e) {
-			String errorMessage = String.format("[EmailService] Failed to send verification email to user: %s (%s)",
-					user.getId(), user.getEmail());
-			log.error(errorMessage, e);
+			log.error("Failed to send verification email to: {}", user.getEmail(), e);
 			throw new EmailSendingException(messageSourceService.get("email_verification_failed"), e);
 		}
 	}
@@ -112,6 +109,7 @@ public class MailSenderService {
 		context.setVariable("APP_NAME", appName);
 		context.setVariable("APP_URL", appUrl);
 		context.setVariable("FRONTEND_URL", frontendUrl);
+		context.setVariable(LOGO_URL, "cid:" + LOGO_CID);
 		return context;
 	}
 
@@ -121,12 +119,19 @@ public class MailSenderService {
 	private void sendEmail(User user, String subject, Context context)
 			throws MessagingException, MailException, UnsupportedEncodingException {
 		MimeMessage mimeMessage = mailSender.createMimeMessage();
-		MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+		MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
 		helper.setFrom(new InternetAddress(senderAddress, appName));
 		helper.setTo(new InternetAddress(user.getEmail(), user.getName()));
 		helper.setSubject(subject);
 		helper.setText(templateEngine.process(EMAIL_TEMPLATE, context), true);
+
+		try {
+			ClassPathResource logoResource = new ClassPathResource(LOGO_IMAGE_PATH);
+			helper.addInline(LOGO_CID, logoResource);
+		} catch (Exception e) {
+			log.error("Failed to add logo image: {}", e.getMessage());
+		}
 
 		mailSender.send(mimeMessage);
 	}

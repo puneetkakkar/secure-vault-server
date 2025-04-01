@@ -1,11 +1,9 @@
 package com.securevault.main.configuration;
 
-import com.securevault.main.service.MessageSourceService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.support.ResourceBundleMessageSource;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -32,56 +30,56 @@ import lombok.RequiredArgsConstructor;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class WebSecurityConfiguration {
-    @Value("${app.pbkdf2.secret}")
-    private String pbkdf2Secret;
+	@Value("${app.pbkdf2.secret}")
+	private String pbkdf2Secret;
 
-    @Value("${app.pbkdf2.salt-length}")
-    private Integer pbkdf2SaltLength;
+	@Value("${app.pbkdf2.salt-length}")
+	private Integer pbkdf2SaltLength;
 
-    @Value("${app.pbkdf2.iterations}")
-    private Integer pbkdf2Iterations;
+	@Value("${app.pbkdf2.iterations}")
+	private Integer pbkdf2Iterations;
 
-    private final JwtAuthEntryPoint jwtAuthEntryPoint;
+	private final JwtAuthEntryPoint jwtAuthEntryPoint;
 
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final MessageSource messageSource;
+	private final JwtAuthenticationFilter jwtAuthenticationFilter;
+	private final MessageSource messageSource;
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new Pbkdf2PasswordEncoder(pbkdf2Secret, pbkdf2SaltLength, pbkdf2Iterations,
-                SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
-    }
+	@Bean
+	public PasswordEncoder passwordEncoder() {
+		return new Pbkdf2PasswordEncoder(pbkdf2Secret, pbkdf2SaltLength, pbkdf2Iterations,
+				SecretKeyFactoryAlgorithm.PBKDF2WithHmacSHA256);
+	}
 
-    @Bean
-    public AuthenticationManager authenticationManager(UserService userService,
-                                                       PasswordEncoder encoder) {
-        DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userService);
-        provider.setPasswordEncoder(encoder);
-        provider.setMessageSource(messageSource);
-        return new ProviderManager(provider);
-    }
+	@Bean
+	public AuthenticationManager authenticationManager(UserService userService,
+			PasswordEncoder encoder) {
+		DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
+		provider.setUserDetailsService(userService);
+		provider.setPasswordEncoder(encoder);
+		provider.setMessageSource(messageSource);
+		return new ProviderManager(provider);
+	}
 
-    /**
-     * Configure Spring Security
-     *
-     * @param http
-     * @return SecurityFilterChain
-     * @throws Exception
-     */
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
-            throws Exception {
-        return http
-                .csrf(AbstractHttpConfigurer::disable)
-                .exceptionHandling(configurer -> configurer.authenticationEntryPoint(jwtAuthEntryPoint))
-                .sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .headers(configurer -> configurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                .authorizeHttpRequests(
-                        requests -> requests.requestMatchers("/", "/api/v1/auth/**").permitAll().anyRequest()
-                                .authenticated())
-                .build();
-    }
+	/**
+	 * Configure Spring Security
+	 *
+	 * @param http
+	 * @return SecurityFilterChain
+	 * @throws Exception
+	 */
+	@Bean
+	public SecurityFilterChain securityFilterChain(HttpSecurity http)
+			throws Exception {
+		return http
+				.csrf(AbstractHttpConfigurer::disable)
+				.exceptionHandling(configurer -> configurer.authenticationEntryPoint(jwtAuthEntryPoint))
+				.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.headers(configurer -> configurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+				.authorizeHttpRequests(
+						requests -> requests.requestMatchers("/", "/api/v1/auth/**").permitAll().anyRequest()
+								.authenticated())
+				.build();
+	}
 
 }

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import org.springframework.http.HttpStatus;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -14,8 +13,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 @Setter
 public abstract class AbstractBaseResponse {
-    protected String status;
+	protected String status;
 
-    protected AbstractBaseResponse() {
-    }
+	protected AbstractBaseResponse() {
+	}
 }

@@ -3,9 +3,7 @@ package com.securevault.main.entity;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -27,35 +25,35 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User extends AbstractBaseEntity {
-    
-    @NotBlank
-    @Size(max = 20)
-    @Email
-    private String email;
 
-    @NotBlank
-    private String masterPasswordHash;
+	@NotBlank
+	@Size(max = 20)
+	@Email
+	private String email;
 
-    @NotBlank
-    private String masterPasswordHint;
+	@NotBlank
+	private String masterPasswordHash;
 
-    @NotBlank
-    private String userKey;
+	@NotBlank
+	private String masterPasswordHint;
 
-    @NotBlank
-    private String name;
+	@NotBlank
+	private String userKey;
 
-    @Min(600000)
-    @Positive
-    private Integer kdfIterations;
+	@NotBlank
+	private String name;
 
-    @DBRef
-    private EmailVerificationToken emailVerificationToken;
+	@Min(600000)
+	@Positive
+	private Integer kdfIterations;
 
-    private LocalDateTime emailVerifiedAt;
+	@DBRef
+	private EmailVerificationToken emailVerificationToken;
 
-    @DBRef
-    @Builder.Default
-    private List<Role> roles = new ArrayList<>();
+	private LocalDateTime emailVerifiedAt;
+
+	@DBRef
+	@Builder.Default
+	private List<Role> roles = new ArrayList<>();
 
 }

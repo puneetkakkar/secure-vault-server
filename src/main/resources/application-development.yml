@@ -55,11 +55,19 @@ logging:
     root: INFO
     com:
       securevault:
-        main:
-          service: DEBUG
+        main: DEBUG
+        main.service: DEBUG
+        main.controller: DEBUG
+        main.util: DEBUG
     org:
       springframework:
-        security: ERROR
+        security: INFO
+        web: INFO
+        data: INFO
+        mail: DEBUG
+    mongodb: INFO
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr([%thread]){magenta} %clr(%-5level) %clr(%logger{36}){cyan} - %msg%n"
   logback:
     rollingpolicy:
       max-file-size: 10MB

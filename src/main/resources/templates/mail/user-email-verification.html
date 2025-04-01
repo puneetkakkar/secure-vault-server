@@ -1,93 +1,169 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-  <th:block th:replace="~{mail/fragments/head :: head}"></th:block>
-  <body>
-    <th:block th:replace="~{mail/fragments/preheader :: preheader}"></th:block>
-
-    <table
-      role="presentation"
-      border="0"
-      cellpadding="0"
-      cellspacing="0"
-      class="body"
-    >
-      <tr>
-        <td>&nbsp;</td>
-        <td class="container">
-          <div class="content">
-            <section th:replace="~{mail/fragments/header :: header}"></section>
-
-            <!-- START CENTERED WHITE CONTAINER -->
-            <table role="presentation" class="main">
-              <!-- START MAIN CONTENT AREA -->
-              <tr>
-                <td class="wrapper">
-                  <table
-                    role="presentation"
-                    border="0"
-                    cellpadding="0"
-                    cellspacing="0"
-                  >
-                    <tr>
-                      <td>
-                        <p>
-                          <span th:text="#{hi}" />
-                          <strong th:text="${name}" />!
-                        </p>
-
-                        <table
-                          role="presentation"
-                          border="0"
-                          cellpadding="0"
-                          cellspacing="0"
-                          class="btn btn-primary"
-                        >
-                          <tbody>
-                            <tr>
-                              <td align="left">
-                                <table
-                                  role="presentation"
-                                  border="0"
-                                  cellpadding="0"
-                                  cellspacing="0"
-                                >
-                                  <tbody>
-                                    <tr>
-                                      <td>
-                                        <a
-                                          th:href="${url}"
-                                          th:text="#{click_to_your_email_verification}"
-                                          target="_blank"
-                                        ></a>
-                                      </td>
-                                    </tr>
-                                  </tbody>
-                                </table>
-                              </td>
-                            </tr>
-                          </tbody>
-                        </table>
-
-                        <p
-                          th:text="#{if_cant_click_button_use_link_below} + ':'"
-                        />
-
-                        <p th:text="${url}" />
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-
-              <!-- END MAIN CONTENT AREA -->
-            </table>
-            <!-- END CENTERED WHITE CONTAINER -->
-
-            <section th:replace="~{mail/fragments/footer :: footer}"></section>
-          </div>
-        </td>
-        <td>&nbsp;</td>
-      </tr>
-    </table>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify your email - Secure Vault</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;600&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #F5F3FF;
+            color: #374151;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+        .email-wrapper {
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(94, 23, 235, 0.1);
+            padding: 32px;
+            margin: 0;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .logo img {
+            width: 120px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .content {
+            text-align: center;
+            padding: 0;
+        }
+        h1 {
+            color: #5E17EB;
+            font-size: 28px;
+            margin: 0 0 24px;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 24px;
+            color: #374151;
+            font-weight: 500;
+        }
+        .message {
+            font-size: 16px;
+            line-height: 1.6;
+            color: #4B5563;
+            margin-bottom: 32px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #5E17EB;
+            color: #ffffff !important;
+            padding: 16px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            margin: 0 0 32px;
+        }
+        .fallback-link {
+            margin: 0;
+            color: #6B7280;
+            font-size: 14px;
+            word-break: break-all;
+            padding: 16px;
+            background-color: #F9FAFB;
+            border-radius: 8px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #E5E7EB;
+            color: #6B7280;
+            font-size: 14px;
+        }
+        .social-links {
+            margin: 16px 0;
+        }
+        .social-links a {
+            color: #5E17EB;
+            text-decoration: none;
+            margin: 0 12px;
+            font-weight: 500;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #1F1F23;
+            }
+            .email-wrapper {
+                background-color: #18181B;
+            }
+            h1 {
+                color: #7C3AED;
+            }
+            .greeting {
+                color: #E5E7EB;
+            }
+            .message {
+                color: #D1D5DB;
+            }
+            .fallback-link {
+                background-color: #27272A;
+                color: #D1D5DB;
+            }
+            .footer {
+                border-top-color: #27272A;
+                color: #9CA3AF;
+            }
+            .social-links a {
+                color: #7C3AED;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="email-wrapper">
+            <div class="logo">
+                <img th:src="${logoUrl}" alt="Secure Vault">
+            </div>
+            
+            <div class="content">
+                <h1>Verify Your Email Address</h1>
+                
+                <div class="greeting">
+                    Hi <strong th:text="${name}">there</strong>! 👋
+                </div>
+                
+                <div class="message">
+                    Thank you for choosing Secure Vault. To complete your registration and start securing your digital life, please verify your email address by clicking the button below.
+                </div>
+                
+                <a th:href="${url}" class="button">
+                    ✉️ Verify Email Address
+                </a>
+                
+                <div class="fallback-link">
+                    If the button doesn't work, copy and paste this link into your browser:<br>
+                    <span th:text="${url}" style="color: #5E17EB; margin-top: 8px; display: inline-block;"></span>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <p>This email was sent by Secure Vault</p>
+                <div class="social-links">
+                    <a href="https://twitter.com/securevault">Twitter</a>
+                    <a href="https://linkedin.com/company/securevault">LinkedIn</a>
+                </div>
+                <p>© 2024 Secure Vault. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
 </html>

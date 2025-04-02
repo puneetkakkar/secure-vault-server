@@ -6,7 +6,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,15 +13,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.securevault.main.configuration.api.ApiVersion;
+import com.securevault.main.dto.request.auth.FinishRegistrationRequest;
 import com.securevault.main.dto.request.auth.LoginRequest;
-import com.securevault.main.dto.request.auth.RegisterRequest;
 import com.securevault.main.dto.request.auth.SendEmailVerificationRequest;
 import com.securevault.main.dto.response.SuccessResponse;
 import com.securevault.main.dto.response.auth.TokenResponse;
 import com.securevault.main.enums.ResponseStatus;
 import com.securevault.main.exception.BadRequestException;
-import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.exception.EmailSendingException;
+import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.service.AuthService;
 import com.securevault.main.service.EmailVerificationService;
 import com.securevault.main.service.MessageSourceService;
@@ -70,9 +69,11 @@ public class AuthController extends AbstractBaseController {
 	}
 
 	@GetMapping(ApiEndpoints.AUTH_EMAIL_VERIFICATION_URL)
-	public ResponseEntity<SuccessResponse> verifyEmail(@PathVariable String token) {
+	public ResponseEntity<SuccessResponse> verifyEmail(
+			@RequestParam String token,
+			@RequestParam String email) {
 		try {
-			emailVerificationService.verifyEmail(token);
+			emailVerificationService.verifyEmail(token, email);
 			return ResponseEntity.ok(SuccessResponse.builder()
 					.status(ResponseStatus.SUCCESS.getValue())
 					.message(messageSourceService.get("email_verified"))
@@ -89,13 +90,22 @@ public class AuthController extends AbstractBaseController {
 		}
 	}
 
-	@PostMapping(ApiEndpoints.AUTH_REGISTER_URL)
-	public ResponseEntity<SuccessResponse> register(@RequestBody @Valid RegisterRequest request) throws BindException {
-		userService.register(request);
-
-		return ResponseEntity
-				.ok(SuccessResponse.builder().status(ResponseStatus.SUCCESS.getValue())
-						.message(messageSourceService.get("registered_successfully")).build());
+	@PostMapping(ApiEndpoints.AUTH_FINISH_REGISTRATION_URL)
+	public ResponseEntity<SuccessResponse> finishRegistration(@RequestBody @Valid FinishRegistrationRequest request)
+			throws BindException {
+		try {
+			userService.finishRegistration(request);
+			return ResponseEntity.ok(SuccessResponse.builder()
+					.status(ResponseStatus.SUCCESS.getValue())
+					.message(messageSourceService.get("registration_completed"))
+					.build());
+		} catch (BadRequestException e) {
+			log.error("Bad request during registration: {}", e.getMessage());
+			throw new BadRequestException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Unexpected error during registration: {}", e.getMessage());
+			throw new BadRequestException(messageSourceService.get("service_unavailable"));
+		}
 	}
 
 	@PostMapping(ApiEndpoints.AUTH_LOGIN_URL)

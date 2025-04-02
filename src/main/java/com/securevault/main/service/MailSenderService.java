@@ -27,7 +27,7 @@ public class MailSenderService {
 	private static final String URL = "url";
 	private static final String LOGO_URL = "logoUrl";
 	private static final String EMAIL_TEMPLATE = "mail/user-email-verification";
-	private static final String EMAIL_VERIFICATION_PATH = "/auth/email-verification/";
+	private static final String EMAIL_VERIFICATION_PATH = "/auth/finish-signup/";
 	private static final String LOGO_IMAGE_PATH = "static/images/secure-vault-logo-1x.png";
 	private static final String LOGO_CID = "logo";
 
@@ -80,7 +80,7 @@ public class MailSenderService {
 
 		try {
 			log.info("Preparing to send verification email to: {}", user.getEmail());
-			String verificationUrl = buildVerificationUrl(user.getEmailVerificationToken().getToken());
+			String verificationUrl = buildVerificationUrl(user.getEmailVerificationToken().getToken(), user);
 			Context emailContext = createEmailContext(user.getName(), verificationUrl);
 			String subject = messageSourceService.get("email_verification_subject");
 			sendEmail(user, subject, emailContext);
@@ -94,8 +94,12 @@ public class MailSenderService {
 	/**
 	 * Build the verification URL for the email
 	 */
-	private String buildVerificationUrl(String token) {
-		return String.format("%s%s%s", frontendUrl, EMAIL_VERIFICATION_PATH, token);
+	private String buildVerificationUrl(String token, User user) {
+		return String.format("%s%s?token=%s&email=%s",
+				frontendUrl,
+				EMAIL_VERIFICATION_PATH,
+				token,
+				user.getEmail());
 	}
 
 	/**

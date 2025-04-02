@@ -12,14 +12,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.BindException;
-import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 
-import com.securevault.main.dto.request.auth.RegisterRequest;
-import com.securevault.main.dto.request.user.AbstractBaseCreateUserRequest;
+import com.securevault.main.dto.request.auth.FinishRegistrationRequest;
 import com.securevault.main.entity.User;
+import com.securevault.main.exception.BadRequestException;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.repository.UserRepository;
 import com.securevault.main.security.JwtUserDetails;
@@ -33,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @Slf4j
 public class UserService implements UserDetailsService {
+	private static final int DEFAULT_KDF_ITERATIONS = 600000;
 	private final UserRepository userRepository;
 	private final RoleService roleService;
 	private final MessageSourceService messageSourceService;
@@ -113,56 +111,33 @@ public class UserService implements UserDetailsService {
 		userRepository.save(user);
 	}
 
-	public void register(final RegisterRequest request) throws BindException {
-		log.info("Registering user with email: {}", request.getEmail());
+	public void finishRegistration(final FinishRegistrationRequest request) throws BindException {
+		log.info("Processing registration request for user with email: {}", request.getEmail());
 
-		User user = createUser(request);
-		user.setRoles(List.of(roleService.findByName(Constants.RoleEnum.USER)));
-		userRepository.save(user);
+		// Find existing user
+		User user = findByEmail(request.getEmail());
 
-		log.info("User registered with email: {}, {}", user.getEmail(), user.getId());
-
-	}
-
-	// public void verifyEmail(String token) {
-	// log.info("Verifying e-mail with token: {}", token);
-	// User user = emailVerficationTokenService.getUserByToken(token);
-	// user.setEmailVerifiedAt(LocalDateTime.now());
-	// userRepository.save(user);
-
-	// emailVerficationTokenService.deleteByUserId(user.getId());
-	// log.info("E-mail verified with token: {}", token);
-	// }
-
-	// protected void emailVerificationEventPublisher(User user) {
-	// user.setEmailVerificationToken(emailVerficationTokenService.create(user));
-	// userRepository.save(user);
-	// eventPublisher.publishEvent(new UserEmailVerificationSendEvent(this, user));
-	// }
-
-	private User createUser(AbstractBaseCreateUserRequest request) throws BindException {
-		BindingResult bindingResult = new BeanPropertyBindingResult(request, "request");
-		userRepository.findByEmail(request.getEmail()).ifPresent(user -> {
-			log.error("User with email: {} already exists", request.getEmail());
-			bindingResult
-					.addError(new FieldError(bindingResult.getObjectName(),
-							"email",
-							bindingResult.getFieldValue("email"),
-							false,
-							null,
-							null,
-							messageSourceService.get("unique_email")));
-		});
-
-		if (bindingResult.hasErrors()) {
-			throw new BindException(bindingResult);
+		// Verify email is verified
+		if (user.getEmailVerifiedAt() == null) {
+			throw new BadRequestException(messageSourceService.get("email_not_verified"));
 		}
 
-		return User.builder().email(request.getEmail())
-				.masterPasswordHash(passwordEncoder.encode(request.getMasterPasswordHash()))
-				.masterPasswordHint(request.getMasterPasswordHint()).name(request.getName())
-				.kdfIterations(request.getKdfIterations()).build();
+		// Check if user is already registered
+		if (user.getMasterPasswordHash() != null) {
+			throw new BadRequestException(messageSourceService.get("user_already_registered"));
+		}
 
+		// Update user with registration data
+		user.setMasterPasswordHash(passwordEncoder.encode(request.getMasterPasswordHash()));
+		user.setMasterPasswordHint(request.getMasterPasswordHint());
+		user.setUserKey(request.getUserKey());
+		user.setKdfIterations(request.getKdfIterations() != null ? request.getKdfIterations() : DEFAULT_KDF_ITERATIONS);
+		user.setRoles(List.of(roleService.findByName(Constants.RoleEnum.USER)));
+
+		// Save updated user
+		userRepository.save(user);
+
+		log.info("Registration completed for user: {}", user.getEmail());
 	}
 
 }

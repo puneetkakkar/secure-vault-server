@@ -46,8 +46,8 @@ public class EmailVerificationService {
 		sendVerificationEmail(user);
 	}
 
-	public void verifyEmail(String token) {
-		log.info("Verifying email with token: {}", token);
+	public void verifyEmail(String token, String email) {
+		log.info("Verifying email with token: {} for email: {}", token, email);
 
 		EmailVerificationToken verificationToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new NotFoundException(
@@ -61,6 +61,10 @@ public class EmailVerificationService {
 		}
 
 		User user = verificationToken.getUser();
+
+		if (!user.getEmail().equals(email)) {
+			throw new BadRequestException(messageSourceService.get("invalid_verification"));
+		}
 
 		if (user.getEmailVerifiedAt() != null) {
 			throw new BadRequestException(messageSourceService.get("email_already_verified"));

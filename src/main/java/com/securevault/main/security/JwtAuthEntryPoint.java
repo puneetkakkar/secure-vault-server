@@ -43,7 +43,7 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 		log.error("Could not set user authentication in security context. Error: {}", authException.getMessage());
 
 		ResponseEntity<ErrorResponse> responseEntity = new AppExceptionHandler(messageSourceService)
-				.handleBadCredentialsException(new BadCredentialsException(message));
+				.handleAuthenticationExceptions(new BadCredentialsException(message));
 
 		response.getWriter().write(objectMapper.writeValueAsString(responseEntity.getBody()));
 		response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

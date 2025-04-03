@@ -49,4 +49,9 @@ public class JwtTokenService {
 		log.info("Deleted token: {}", jwtToken);
 	}
 
+	public void deleteAllByUserId(UUID userId) {
+		log.info("Deleting all tokens for user: {}", userId);
+		jwtTokenRepository.deleteAllByUserId(userId);
+	}
+
 }

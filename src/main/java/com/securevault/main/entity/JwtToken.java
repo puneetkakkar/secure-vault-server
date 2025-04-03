@@ -1,5 +1,6 @@
 package com.securevault.main.entity;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -9,14 +10,18 @@ import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 import org.springframework.data.redis.core.index.Indexed;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Builder
+@RedisHash(value = "jwt_tokens")
 @Getter
 @Setter
-@RedisHash(value = "jwtTokens")
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class JwtToken {
 
 	@Id
@@ -42,6 +47,8 @@ public class JwtToken {
 
 	@TimeToLive(unit = TimeUnit.MILLISECONDS)
 	private Long tokenTimeToLive;
+
+	private LocalDateTime refreshTokenUsedAt;
 
 	public boolean isExpired() {
 		return getExpirationDate().before(new Date());

@@ -11,4 +11,6 @@ public interface JwtTokenRepository extends CrudRepository<JwtToken, UUID> {
 	Optional<JwtToken> findByTokenOrRefreshToken(String token, String refreshToken);
 
 	Optional<JwtToken> findByUserIdAndRefreshToken(UUID id, String refreshToken);
+
+	void deleteAllByUserId(UUID userId);
 }

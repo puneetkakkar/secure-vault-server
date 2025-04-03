@@ -140,4 +140,22 @@ public class UserService implements UserDetailsService {
 		log.info("Registration completed for user: {}", user.getEmail());
 	}
 
+	public void incrementFailedLoginAttempts(String email) {
+		User user = findByEmail(email);
+		user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
+		
+		if (user.getFailedLoginAttempts() >= 5) {
+			user.setLockedUntil(LocalDateTime.now().plusMinutes(30));
+		}
+		
+		userRepository.save(user);
+	}
+
+	public void resetFailedLoginAttempts(String email) {
+		User user = findByEmail(email);
+		user.setFailedLoginAttempts(0);
+		user.setLockedUntil(null);
+		userRepository.save(user);
+	}
+
 }

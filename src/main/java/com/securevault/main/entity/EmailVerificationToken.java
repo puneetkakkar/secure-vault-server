@@ -11,18 +11,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Document(collection = "email_verification_tokens")
 @Getter
 @Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(collection = "email_verification_tokens")
 public class EmailVerificationToken extends AbstractBaseEntity {
-
 	@DBRef
 	private User user;
 
 	private String token;
+
 	private Date expirationDate;
 
 	public boolean isExpired() {

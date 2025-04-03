@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.securevault.main.exception.InvalidTokenException;
 import com.securevault.main.service.UserService;
 
 import jakarta.servlet.FilterChain;
@@ -24,41 +25,49 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtTokenProvider jwtTokenProvider;
+	private final JwtTokenProvider jwtTokenProvider;
+	private final UserService userService;
 
-    private final UserService userService;
+	public JwtAuthenticationFilter(
+			@Lazy JwtTokenProvider jwtTokenProvider,
+			@Lazy UserService userService) {
+		this.jwtTokenProvider = jwtTokenProvider;
+		this.userService = userService;
+	}
 
-    public JwtAuthenticationFilter(@Lazy JwtTokenProvider jwtTokenProvider, @Lazy UserService userService) {
-        this.jwtTokenProvider = jwtTokenProvider;
-        this.userService = userService;
-    }
+	@Override
+	protected final void doFilterInternal(@NonNull final HttpServletRequest request,
+			@NonNull final HttpServletResponse response, @NonNull final FilterChain filterChain)
+			throws ServletException, IOException {
 
-    @Override
-    protected final void doFilterInternal(@NonNull final HttpServletRequest request,
-                                          @NonNull final HttpServletResponse response, @NonNull final FilterChain filterChain)
-            throws ServletException, IOException {
+		String token = jwtTokenProvider.extractJwtFromRequest(request);
 
+		try {
+			if (StringUtils.hasText(token)) {
+				// Validate token and get validation result
+				JwtTokenProvider.TokenValidationResult validationResult = jwtTokenProvider.validateToken(token);
 
-        String token = jwtTokenProvider.extractJwtFromRequest(request);
+				if (!validationResult.isValid()) {
+					log.error("Token validation failed: {}", validationResult.getErrorMessage());
+					throw new InvalidTokenException(validationResult.getErrorMessage());
+				}
 
-        try {
-            if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token, request)) {
-                String id = jwtTokenProvider.getUserIdFromToken(token);
-                UserDetails user = userService.loadUserById(id);
+				// Get user ID from validated token
+				String userId = jwtTokenProvider.getUserIdFromToken(token);
 
-                if (Objects.nonNull(user) && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(user, null,
-                            user.getAuthorities());
-                    SecurityContextHolder.getContext().setAuthentication(auth);
-                }
-            }
+				// Load user details
+				UserDetails user = userService.loadUserById(userId);
 
-            filterChain.doFilter(request, response);
-        } catch (AccessDeniedException e) {
-            throw new AccessDeniedException(e.getMessage());
-        }
+				if (Objects.nonNull(user) && SecurityContextHolder.getContext().getAuthentication() == null) {
+					UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
+							user, null, user.getAuthorities());
+					SecurityContextHolder.getContext().setAuthentication(auth);
+				}
+			}
 
-        log.info(request.getRemoteAddr());
-    }
-
+			filterChain.doFilter(request, response);
+		} catch (AccessDeniedException e) {
+			throw new AccessDeniedException(e.getMessage());
+		}
+	}
 }

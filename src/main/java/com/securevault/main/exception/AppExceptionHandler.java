@@ -105,12 +105,17 @@ public class AppExceptionHandler {
 	}
 
 	@ExceptionHandler({
+			UnverifiedEmailException.class,
+			AccountLockedException.class,
+			InvalidCredentialsException.class,
+			InvalidTokenException.class,
+			TokenReuseException.class,
 			InternalAuthenticationServiceException.class,
 			BadCredentialsException.class,
 			AuthenticationCredentialsNotFoundException.class
 	})
-	public final ResponseEntity<ErrorResponse> handleBadCredentialsException(final Exception e) {
-		log.error(e.toString(), e.getMessage());
+	public final ResponseEntity<ErrorResponse> handleAuthenticationExceptions(final Exception e) {
+		log.error("Authentication error: {}", e.getMessage());
 		return build(HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED, e.getMessage());
 	}
 

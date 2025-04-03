@@ -1,25 +1,30 @@
 package com.securevault.main.service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import com.securevault.main.dto.response.auth.TokenExpiresInResponse;
 import com.securevault.main.dto.response.auth.TokenResponse;
 import com.securevault.main.entity.JwtToken;
 import com.securevault.main.entity.User;
+import com.securevault.main.exception.AccountLockedException;
+import com.securevault.main.exception.BadRequestException;
+import com.securevault.main.exception.InvalidCredentialsException;
+import com.securevault.main.exception.InvalidTokenException;
 import com.securevault.main.exception.NotFoundException;
-import com.securevault.main.exception.RefreshTokenExpiredException;
+import com.securevault.main.exception.TokenReuseException;
+import com.securevault.main.exception.UnverifiedEmailException;
 import com.securevault.main.security.JwtTokenProvider;
 import com.securevault.main.security.JwtUserDetails;
-import com.securevault.main.util.Constants;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -54,89 +59,147 @@ public class AuthService {
 	private final MessageSourceService messageSourceService;
 
 	public TokenResponse login(String email, final String masterPasswordHash, final Boolean rememberMe) {
-		log.info("login request received: {}", email);
-
-		String badCredentialsMessage = messageSourceService.get("bad_credentials");
+		log.info("Login request received for email: {}", email);
 
 		try {
+			// Find user and check if email is verified
 			User user = userService.findByEmail(email);
-			email = user.getEmail();
-		} catch (Exception e) {
-			log.error("User not found with email: {}", email);
-			throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
-		}
+			if (user.getEmailVerifiedAt() == null) {
+				log.error("Login attempt for unverified email: {}", email);
+				throw new UnverifiedEmailException(messageSourceService.get("email_not_verified"));
+			}
 
-		UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email,
-				masterPasswordHash);
+			// Check if user is properly registered
+			if (user.getMasterPasswordHash() == null) {
+				log.error("Login attempt for unregistered user: {}", email);
+				throw new BadRequestException(messageSourceService.get("user_not_registered"));
+			}
 
-		try {
-			Authentication authentication = authenticationManager.authenticate(authenticationToken);
-			JwtUserDetails user = jwtTokenProvider.getPrincipal(authentication);
+			// Check if user is locked
+			if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
+				log.error("Login attempt for locked user: {}", email);
+				throw new AccountLockedException(messageSourceService.get("account_locked"));
+			}
 
-			UUID uuid = UUID.fromString(user.getId());
+			// Authenticate user
+			UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(email,
+					masterPasswordHash);
 
-			return generateToken(uuid, rememberMe);
+			try {
+				Authentication authentication = authenticationManager.authenticate(authenticationToken);
+				JwtUserDetails userDetails = jwtTokenProvider.getPrincipal(authentication);
+
+				// Reset failed login attempts on successful login
+				userService.resetFailedLoginAttempts(email);
+
+				return generateAndStoreTokens(UUID.fromString(userDetails.getId()), rememberMe);
+			} catch (AuthenticationException e) {
+				// Increment failed login attempts
+				userService.incrementFailedLoginAttempts(email);
+
+				log.error("Invalid credentials for user: {}", email);
+				throw new InvalidCredentialsException(messageSourceService.get("invalid_credentials"));
+			}
 		} catch (NotFoundException e) {
-			log.error("Authentication failed for email: {}", email);
-			throw new AuthenticationCredentialsNotFoundException(badCredentialsMessage);
+			log.error("User not found with email: {}", email);
+			throw new InvalidCredentialsException(messageSourceService.get("invalid_credentials"));
 		}
 	}
 
 	public TokenResponse refreshFromCookie(final String refreshToken) {
-		return refresh(refreshToken);
+		try {
+			// Validate refresh token and get validation result
+			JwtTokenProvider.TokenValidationResult validationResult = jwtTokenProvider.validateToken(refreshToken);
+			if (!validationResult.isValid()) {
+				log.error("Invalid refresh token: {}", validationResult.getErrorMessage());
+				throw new InvalidTokenException(validationResult.getErrorMessage());
+			}
+
+			// Get the validated token from the result
+			JwtToken existingToken = validationResult.getJwtToken();
+			if (existingToken == null) {
+				log.error("Token record not found in validation result");
+				throw new InvalidTokenException(messageSourceService.get("invalid_refresh_token"));
+			}
+
+			// Get user from the validated token
+			User user = userService.findById(existingToken.getUserId());
+
+			// Check if user exists and is not locked
+			if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(LocalDateTime.now())) {
+				log.error("Account locked for user: {}", user.getEmail());
+				throw new AccountLockedException(messageSourceService.get("account_locked"));
+			}
+
+			// Check if refresh token was already used
+			if (existingToken.getRefreshTokenUsedAt() != null) {
+				log.error("Refresh token reuse detected for user: {}", user.getEmail());
+				// Invalidate all user's tokens as a security measure
+				jwtTokenService.deleteAllByUserId(user.getId());
+				throw new TokenReuseException(messageSourceService.get("token_reuse_detected"));
+			}
+
+			// Mark refresh token as used
+			existingToken.setRefreshTokenUsedAt(LocalDateTime.now());
+			jwtTokenService.save(existingToken);
+
+			// Generate and store new tokens
+			TokenResponse newTokens = generateAndStoreTokens(user.getId(), existingToken.getRememberMe());
+
+			// Delete old token
+			jwtTokenService.delete(existingToken);
+
+			return newTokens;
+		} catch (NotFoundException e) {
+			log.error("User not found during token refresh");
+			throw new InvalidTokenException(messageSourceService.get("invalid_refresh_token"));
+		} catch (TokenReuseException e) {
+			log.error("Token reuse attempt detected");
+			throw new TokenReuseException(messageSourceService.get("token_reuse_detected"));
+		}
 	}
 
 	public void logout(User user, final String bearer) {
-		JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(jwtTokenProvider.extractJwtFromBearerString(bearer));
+		log.info("Logout request received for user: {}", user.getEmail());
 
+		// Extract token from bearer
+		String token = jwtTokenProvider.extractJwtFromBearerString(bearer);
+		if (token == null) {
+			log.error("Invalid bearer token format");
+			throw new InvalidTokenException(messageSourceService.get("invalid_token"));
+		}
+
+		// Find token in database
+		JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(token);
+		if (jwtToken == null) {
+			log.error("Token not found in database");
+			throw new InvalidTokenException(messageSourceService.get("invalid_token"));
+		}
+
+		// Verify token belongs to user
 		if (!user.getId().equals(jwtToken.getUserId())) {
-			log.error("User id: {} is not equal to token user id: {}", user.getId(), jwtToken.getUserId());
+			log.error("Token user mismatch. Expected: {}, Actual: {}", user.getId(), jwtToken.getUserId());
+			throw new InvalidTokenException(messageSourceService.get("invalid_token"));
 		}
 
+		// Delete the token
 		jwtTokenService.delete(jwtToken);
+
+		// Clear refresh token cookie
+		clearRefreshTokenCookie();
+
+		log.info("User {} successfully logged out", user.getEmail());
 	}
 
-	public void logout(User user) {
-		logout(user, httpServletRequest.getHeader(Constants.TOKEN_HEADER));
-	}
-
-	private TokenResponse refresh(final String refreshToken) {
-		log.info("Refresh request received: {}", refreshToken);
-
-		if (!jwtTokenProvider.validateToken(refreshToken)) {
-			log.error("Refresh token is expired.");
-			JwtToken refreshJwtToken = jwtTokenProvider.getTokenOrRefreshToken(refreshToken);
-
-			if (refreshJwtToken != null) {
-				jwtTokenService.delete(refreshJwtToken);
-			}
-
-			throw new RefreshTokenExpiredException(messageSourceService.get("access_denied"));
-		}
-
-		User user = jwtTokenProvider.getUserFromToken(refreshToken);
-		JwtToken oldToken = jwtTokenService.findByUserIdAndRefreshToken(user.getId(), refreshToken);
-		if (oldToken != null && oldToken.getRememberMe()) {
-			jwtTokenProvider.setRememberMe();
-		}
-
-		boolean rememberMe = false;
-		if (oldToken != null) {
-			rememberMe = oldToken.getRememberMe();
-			jwtTokenService.delete(oldToken);
-		}
-
-		return generateToken(user.getId(), rememberMe);
-	}
-
-	private TokenResponse generateToken(final UUID userId, final Boolean rememberMe) {
-		// Generate tokens
-		String accessToken = jwtTokenProvider.generateJwt(userId.toString());
-		String refreshToken = jwtTokenProvider.generateRefresh(userId.toString());
-
+	private TokenResponse generateAndStoreTokens(final UUID userId, final Boolean rememberMe) {
+		// Set remember me if needed
 		if (rememberMe) {
 			jwtTokenProvider.setRememberMe();
 		}
+
+		// Generate tokens
+		String accessToken = jwtTokenProvider.generateJwt(userId.toString());
+		String refreshToken = jwtTokenProvider.generateRefresh(userId.toString());
 
 		// Create and save JWT token
 		JwtToken jwtToken = JwtToken.builder()
@@ -151,7 +214,7 @@ public class AuthService {
 
 		jwtTokenService.save(jwtToken);
 
-		log.info("Token generated for user: {}", userId);
+		log.info("Tokens generated for user: {}", userId);
 
 		// Set refresh token cookie
 		setRefreshTokenCookie(refreshToken);
@@ -162,7 +225,6 @@ public class AuthService {
 						.token(jwtTokenProvider.getTokenExpiresIn())
 						.build())
 				.build();
-
 	}
 
 	private void setRefreshTokenCookie(String refreshToken) {
@@ -175,6 +237,19 @@ public class AuthService {
 				.secure(isCookieSecure)
 				.sameSite(cookieSameSite)
 				.maxAge(maxAgeInSeconds)
+				.build();
+
+		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+	}
+
+	private void clearRefreshTokenCookie() {
+		ResponseCookie jwtCookie = ResponseCookie.from("refreshToken", "")
+				.domain(cookieDomain)
+				.path(cookiePath)
+				.httpOnly(isCookieHttpOnly)
+				.secure(isCookieSecure)
+				.sameSite(cookieSameSite)
+				.maxAge(0)
 				.build();
 
 		httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());

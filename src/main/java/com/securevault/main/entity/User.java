@@ -18,7 +18,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Document(collection = "user")
+@Document(collection = "users")
 @Getter
 @Setter
 @Builder
@@ -51,6 +51,10 @@ public class User extends AbstractBaseEntity {
 	private EmailVerificationToken emailVerificationToken;
 
 	private LocalDateTime emailVerifiedAt;
+
+	private int failedLoginAttempts;
+
+	private LocalDateTime lockedUntil;
 
 	@DBRef
 	@Builder.Default

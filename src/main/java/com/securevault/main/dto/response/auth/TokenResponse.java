@@ -9,7 +9,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
-public class TokenResponse extends AbstractBaseResponse {
+public class TokenResponse extends AbstractBaseResponse<TokenResponse> {
 	private String token;
 	private TokenExpiresInResponse expiresIn;
 }

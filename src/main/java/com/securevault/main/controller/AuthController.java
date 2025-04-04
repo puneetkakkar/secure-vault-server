@@ -58,13 +58,18 @@ public class AuthController extends AbstractBaseController {
 			@RequestBody @Valid SendEmailVerificationRequest request) {
 		try {
 			emailVerificationService.sendEmailVerification(request);
-			return ResponseEntity.ok(SuccessResponse.builder()
-					.status(ResponseStatus.SUCCESS.getValue())
-					.message(messageSourceService.get("email_verification_sent"))
-					.build());
+			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("email_verification_sent")));
 		} catch (BadRequestException e) {
 			log.error("Bad request during email verification send: {}", e.getMessage());
-			throw new BadRequestException(messageSourceService.get("email_verification_failed"));
+
+			String exceptionMessage = e.getMessage() != null ? e.getMessage()
+					: messageSourceService.get("email_verification_failed");
+
+			if (e.getNextAction() != null) {
+				throw new BadRequestException(exceptionMessage).withNextAction(e.getNextAction(), e.getRedirectUrl());
+			}
+
+			throw new BadRequestException(exceptionMessage);
 		} catch (NotFoundException e) {
 			log.error("User not found during email verification send: {}", e.getMessage());
 			throw new NotFoundException(messageSourceService.get("user_not_found"));
@@ -124,6 +129,9 @@ public class AuthController extends AbstractBaseController {
 					request.getRememberMe());
 			loginTokenResponse.setStatus(ResponseStatus.SUCCESS.getValue());
 			return ResponseEntity.ok(loginTokenResponse);
+		} catch (BadRequestException e) {
+			log.error("Bad request during login: {}", e.getMessage());
+			throw new BadRequestException(e.getMessage());
 		} catch (InvalidCredentialsException e) {
 			log.error("Invalid credentials for user: {}", request.getEmail());
 			throw new BadRequestException(messageSourceService.get("invalid_credentials"));

@@ -94,7 +94,7 @@ public class UserService implements UserDetailsService {
 	public User getOrCreateUnverifiedUser(String email, String name) {
 		try {
 			User existingUser = findByEmail(email);
-
+			
 			return existingUser;
 		} catch (NotFoundException e) {
 			// Create new unverified user
@@ -114,40 +114,46 @@ public class UserService implements UserDetailsService {
 	public void finishRegistration(final FinishRegistrationRequest request) throws BindException {
 		log.info("Processing registration request for user with email: {}", request.getEmail());
 
-		// Find existing user
-		User user = findByEmail(request.getEmail());
+		try {
+			// Find existing user
+			User user = findByEmail(request.getEmail());
 
-		// Verify email is verified
-		if (user.getEmailVerifiedAt() == null) {
-			throw new BadRequestException(messageSourceService.get("email_not_verified"));
+			// Verify email is verified
+			if (user.getEmailVerifiedAt() == null) {
+				throw new BadRequestException(messageSourceService.get("email_not_verified"));
+			}
+
+			// Check if user is already registered
+			if (user.getMasterPasswordHash() != null) {
+				throw new BadRequestException(messageSourceService.get("user_already_registered"));
+			}
+
+			// Update user with registration data
+			user.setMasterPasswordHash(passwordEncoder.encode(request.getMasterPasswordHash()));
+			user.setMasterPasswordHint(request.getMasterPasswordHint());
+			user.setUserKey(request.getUserKey());
+			user.setKdfIterations(request.getKdfIterations() != null ? request.getKdfIterations() : DEFAULT_KDF_ITERATIONS);
+			user.setRoles(List.of(roleService.findByName(Constants.RoleEnum.USER)));
+
+			// Save updated user
+			userRepository.save(user);
+
+			log.info("Registration completed for user: {}", user.getEmail());
+		} catch (Exception e) {
+			log.error("User not found during registration: {}", request.getEmail());
+			throw new BadRequestException(messageSourceService.get("complete_registration_first"));
 		}
 
-		// Check if user is already registered
-		if (user.getMasterPasswordHash() != null) {
-			throw new BadRequestException(messageSourceService.get("user_already_registered"));
-		}
-
-		// Update user with registration data
-		user.setMasterPasswordHash(passwordEncoder.encode(request.getMasterPasswordHash()));
-		user.setMasterPasswordHint(request.getMasterPasswordHint());
-		user.setUserKey(request.getUserKey());
-		user.setKdfIterations(request.getKdfIterations() != null ? request.getKdfIterations() : DEFAULT_KDF_ITERATIONS);
-		user.setRoles(List.of(roleService.findByName(Constants.RoleEnum.USER)));
-
-		// Save updated user
-		userRepository.save(user);
-
-		log.info("Registration completed for user: {}", user.getEmail());
 	}
 
 	public void incrementFailedLoginAttempts(String email) {
 		User user = findByEmail(email);
 		user.setFailedLoginAttempts(user.getFailedLoginAttempts() + 1);
-		
+
 		if (user.getFailedLoginAttempts() >= 5) {
 			user.setLockedUntil(LocalDateTime.now().plusMinutes(30));
 		}
-		
+
 		userRepository.save(user);
 	}
 

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.securevault.main.dto.request.auth.SendEmailVerificationRequest;
 import com.securevault.main.entity.EmailVerificationToken;
 import com.securevault.main.entity.User;
+import com.securevault.main.enums.NextAction;
 import com.securevault.main.event.UserEmailVerificationSendEvent;
 import com.securevault.main.exception.BadRequestException;
 import com.securevault.main.exception.NotFoundException;
@@ -40,7 +41,8 @@ public class EmailVerificationService {
 		User user = userService.getOrCreateUnverifiedUser(request.getEmail(), request.getName());
 
 		if (user.getEmailVerifiedAt() != null) {
-			throw new BadRequestException(messageSourceService.get("email_already_verified"));
+			throw new BadRequestException(messageSourceService.get("email_already_verified"))
+					.withNextAction(NextAction.REDIRECT_TO_FINISH_REGISTRATION, "/auth/finish-registration");
 		}
 
 		sendVerificationEmail(user);

@@ -30,6 +30,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.securevault.main.dto.response.DetailedErrorResponse;
 import com.securevault.main.dto.response.ErrorResponse;
+import com.securevault.main.dto.response.NextActionInfo;
 import com.securevault.main.enums.ErrorCode;
 import com.securevault.main.enums.ResponseStatus;
 import com.securevault.main.service.MessageSourceService;
@@ -72,8 +73,17 @@ public class AppExceptionHandler {
 				messageSourceService.get("validation_error"), fieldErrors);
 	}
 
+	@ExceptionHandler(BadRequestException.class)
+	public final ResponseEntity<ErrorResponse> handleBadRequestException(final BadRequestException e) {
+		log.error("Bad request: {}", e.getMessage());
+		if (e.getNextAction() != null) {
+			return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, e.getMessage(),
+					NextActionInfo.of(e.getNextAction(), e.getRedirectUrl()));
+		}
+		return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, e.getMessage());
+	}
+
 	@ExceptionHandler({
-			BadRequestException.class,
 			MultipartException.class,
 			MissingServletRequestPartException.class,
 			HttpMediaTypeNotSupportedException.class,
@@ -166,43 +176,44 @@ public class AppExceptionHandler {
 	 */
 	private ResponseEntity<ErrorResponse> build(final HttpStatus httpStatus, final ErrorCode errorCode,
 			final String message,
-			final Map<String, List<Map<String, String>>> errors) {
-
-		ErrorResponse errorResponse = ErrorResponse.builder()
-				.code(errorCode)
-				.message(message)
-				.timestamp(Instant.now())
-				.build();
-
-		DetailedErrorResponse detailedErrorResponse = DetailedErrorResponse.builder()
-				.code(errorCode)
-				.message(message)
-				.timestamp(Instant.now())
-				.errors(errors)
-				.build();
-
-		errorResponse.setStatus(ResponseStatus.ERROR.getValue());
-		detailedErrorResponse.setStatus(ResponseStatus.ERROR.getValue());
+			final Map<String, List<Map<String, String>>> errors,
+			final NextActionInfo nextActionInfo) {
+		ErrorResponse errorResponse = ErrorResponse.of(errorCode, message);
 
 		if (!errors.isEmpty()) {
+			DetailedErrorResponse detailedErrorResponse = DetailedErrorResponse.builder()
+					.code(errorCode)
+					.message(message)
+					.timestamp(Instant.now())
+					.errors(errors)
+					.build();
+			detailedErrorResponse.setStatus(ResponseStatus.ERROR.getValue());
+			if (nextActionInfo != null) {
+				detailedErrorResponse.setNextAction(nextActionInfo);
+			}
 			return ResponseEntity.status(httpStatus).body(detailedErrorResponse);
 		}
 
+		if (nextActionInfo != null) {
+			errorResponse.setNextAction(nextActionInfo);
+		}
 		return ResponseEntity.status(httpStatus).body(errorResponse);
 	}
 
-	/**
-	 * Build error response
-	 *
-	 * @param httpStatus HttpStatus enum to response status field
-	 * @param message    String for response message field
-	 * @return ResponsEntity
-	 */
+	private ResponseEntity<ErrorResponse> build(final HttpStatus httpStatus, final ErrorCode errorCode,
+			final String message,
+			final Map<String, List<Map<String, String>>> errors) {
+		return build(httpStatus, errorCode, message, errors, null);
+	}
+
 	private ResponseEntity<ErrorResponse> build(final HttpStatus httpStatus, final ErrorCode errorCode,
 			final String message) {
-		Map<String, List<Map<String, String>>> errors = new HashMap<>();
+		return build(httpStatus, errorCode, message, new HashMap<>(), null);
+	}
 
-		return build(httpStatus, errorCode, message, errors);
+	private ResponseEntity<ErrorResponse> build(final HttpStatus httpStatus, final ErrorCode errorCode,
+			final String message, final NextActionInfo nextActionInfo) {
+		return build(httpStatus, errorCode, message, new HashMap<>(), nextActionInfo);
 	}
 
 }

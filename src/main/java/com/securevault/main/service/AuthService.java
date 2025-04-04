@@ -62,17 +62,19 @@ public class AuthService {
 		log.info("Login request received for email: {}", email);
 
 		try {
-			// Find user and check if email is verified
+			// Find user
 			User user = userService.findByEmail(email);
-			if (user.getEmailVerifiedAt() == null) {
-				log.error("Login attempt for unverified email: {}", email);
-				throw new UnverifiedEmailException(messageSourceService.get("email_not_verified"));
-			}
 
 			// Check if user is properly registered
 			if (user.getMasterPasswordHash() == null) {
 				log.error("Login attempt for unregistered user: {}", email);
 				throw new BadRequestException(messageSourceService.get("user_not_registered"));
+			}
+
+			// Check if email is verified
+			if (user.getEmailVerifiedAt() == null) {
+				log.error("Login attempt for unverified email: {}", email);
+				throw new UnverifiedEmailException(messageSourceService.get("email_not_verified"));
 			}
 
 			// Check if user is locked

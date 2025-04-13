@@ -11,11 +11,13 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class SuccessResponse extends AbstractBaseResponse<SuccessResponse> {
 	private String message;
+	private Object data;
 
-	public static SuccessResponse of(String message) {
+	public static <T> SuccessResponse of(String message, T data) {
 		return SuccessResponse.builder()
 				.status(ResponseStatus.SUCCESS.getValue())
 				.message(message)
+				.data(data)
 				.build();
 	}
 }

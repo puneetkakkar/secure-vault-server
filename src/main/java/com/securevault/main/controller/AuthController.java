@@ -18,7 +18,6 @@ import com.securevault.main.dto.request.auth.LoginRequest;
 import com.securevault.main.dto.request.auth.SendEmailVerificationRequest;
 import com.securevault.main.dto.response.SuccessResponse;
 import com.securevault.main.dto.response.auth.TokenResponse;
-import com.securevault.main.enums.ResponseStatus;
 import com.securevault.main.exception.AccountLockedException;
 import com.securevault.main.exception.BadRequestException;
 import com.securevault.main.exception.EmailSendingException;
@@ -58,7 +57,7 @@ public class AuthController extends AbstractBaseController {
 			@RequestBody @Valid SendEmailVerificationRequest request) {
 		try {
 			emailVerificationService.sendEmailVerification(request);
-			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("email_verification_sent")));
+			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("email_verification_sent"), null));
 		} catch (BadRequestException e) {
 			log.error("Bad request during email verification send: {}", e.getMessage());
 
@@ -82,16 +81,13 @@ public class AuthController extends AbstractBaseController {
 		}
 	}
 
-	@GetMapping(ApiEndpoints.AUTH_EMAIL_VERIFICATION_URL)
+	@GetMapping(ApiEndpoints.AUTH_VERIFY_EMAIL_URL)
 	public ResponseEntity<SuccessResponse> verifyEmail(
 			@RequestParam String token,
 			@RequestParam String email) {
 		try {
 			emailVerificationService.verifyEmail(token, email);
-			return ResponseEntity.ok(SuccessResponse.builder()
-					.status(ResponseStatus.SUCCESS.getValue())
-					.message(messageSourceService.get("email_verified"))
-					.build());
+			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("email_verified"), null));
 		} catch (BadRequestException e) {
 			log.error("Bad request during email verification: {}", e.getMessage());
 			throw new BadRequestException(messageSourceService.get("invalid_verification"));
@@ -109,10 +105,7 @@ public class AuthController extends AbstractBaseController {
 			throws BindException {
 		try {
 			userService.finishRegistration(request);
-			return ResponseEntity.ok(SuccessResponse.builder()
-					.status(ResponseStatus.SUCCESS.getValue())
-					.message(messageSourceService.get("registration_completed"))
-					.build());
+			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("registration_completed"), null));
 		} catch (BadRequestException e) {
 			log.error("Bad request during registration: {}", e.getMessage());
 			throw new BadRequestException(e.getMessage());
@@ -123,12 +116,12 @@ public class AuthController extends AbstractBaseController {
 	}
 
 	@PostMapping(ApiEndpoints.AUTH_LOGIN_URL)
-	public ResponseEntity<TokenResponse> login(@RequestBody @Validated final LoginRequest request) {
+	public ResponseEntity<SuccessResponse> login(@RequestBody @Validated final LoginRequest request) {
 		try {
 			TokenResponse loginTokenResponse = authService.login(request.getEmail(), request.getMasterPasswordHash(),
 					request.getRememberMe());
-			loginTokenResponse.setStatus(ResponseStatus.SUCCESS.getValue());
-			return ResponseEntity.ok(loginTokenResponse);
+
+			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("login_success"), loginTokenResponse));
 		} catch (BadRequestException e) {
 			log.error("Bad request during login: {}", e.getMessage());
 			throw new BadRequestException(e.getMessage());
@@ -151,11 +144,11 @@ public class AuthController extends AbstractBaseController {
 	}
 
 	@GetMapping(ApiEndpoints.AUTH_REFRESH_TOKEN_URL)
-	public ResponseEntity<TokenResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
+	public ResponseEntity<SuccessResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
 		try {
 			TokenResponse refreshTokenResponse = authService.refreshFromCookie(refreshToken);
-			refreshTokenResponse.setStatus(ResponseStatus.SUCCESS.getValue());
-			return ResponseEntity.ok(refreshTokenResponse);
+
+			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("token_refreshed"), refreshTokenResponse));
 		} catch (InvalidTokenException e) {
 			log.error("Invalid refresh token");
 			throw new BadRequestException(messageSourceService.get("invalid_refresh_token"));
@@ -183,10 +176,7 @@ public class AuthController extends AbstractBaseController {
 
 			authService.logout(userService.getUser(), token);
 
-			return ResponseEntity.ok(SuccessResponse.builder()
-					.status(ResponseStatus.SUCCESS.getValue())
-					.message(messageSourceService.get("logout_successfully"))
-					.build());
+			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("logout_successfully"), null));
 		} catch (NotFoundException e) {
 			log.error("User not found during logout");
 			throw new NotFoundException(messageSourceService.get("user_not_found"));

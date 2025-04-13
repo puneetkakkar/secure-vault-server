@@ -68,6 +68,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			filterChain.doFilter(request, response);
 		} catch (AccessDeniedException e) {
 			throw new AccessDeniedException(e.getMessage());
+		} catch (Exception e) {
+			log.error("Error processing JWT token: {}", e.getMessage());
 		}
 	}
 }

@@ -18,6 +18,9 @@ import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder;
 import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder.SecretKeyFactoryAlgorithm;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.securevault.main.security.JwtAuthEntryPoint;
 import com.securevault.main.security.JwtAuthenticationFilter;
@@ -60,6 +63,19 @@ public class WebSecurityConfiguration {
 		return new ProviderManager(provider);
 	}
 
+	@Bean
+	public CorsConfigurationSource corsConfigurationSource() {
+		CorsConfiguration configuration = new CorsConfiguration();
+		configuration.addAllowedOrigin("http://localhost:3000");
+		configuration.addAllowedMethod("*");
+		configuration.addAllowedHeader("*");
+		configuration.setAllowCredentials(true);
+
+		UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+		source.registerCorsConfiguration("/api/**", configuration);
+		return source;
+	}
+
 	/**
 	 * Configure Spring Security
 	 *
@@ -72,13 +88,15 @@ public class WebSecurityConfiguration {
 			throws Exception {
 		return http
 				.csrf(AbstractHttpConfigurer::disable)
+				.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.exceptionHandling(configurer -> configurer.authenticationEntryPoint(jwtAuthEntryPoint))
 				.sessionManagement(configurer -> configurer.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.headers(configurer -> configurer.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
-				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.authorizeHttpRequests(
-						requests -> requests.requestMatchers("/", "/api/v1/auth/**").permitAll().anyRequest()
-								.authenticated())
+						requests -> requests
+								.requestMatchers("/", "/api/v1/auth/**").permitAll()
+								.anyRequest().authenticated())
+				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 				.build();
 	}
 

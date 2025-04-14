@@ -8,4 +8,7 @@ public final class ApiEndpoints {
 	public static final String AUTH_REFRESH_TOKEN_URL = "/refresh";
 	public static final String AUTH_SEND_EMAIL_VERIFICATION_URL = "/send-email-verification";
 	public static final String AUTH_VERIFY_EMAIL_URL = "/verify-email";
+
+	public static final String USER_BASE_URL = "/user";
+	public static final String USER_GET_AUTHENTICATED_USER_URL = "/me";
 }

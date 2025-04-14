@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.securevault.main.exception.BadRequestException;
 import com.securevault.main.exception.InvalidTokenException;
 import com.securevault.main.service.UserService;
 
@@ -68,8 +69,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			filterChain.doFilter(request, response);
 		} catch (AccessDeniedException e) {
 			throw new AccessDeniedException(e.getMessage());
+		} catch (InvalidTokenException e) {
+			log.error("Invalid token: {}", e.getMessage());
+			request.setAttribute("access_denied", e.getMessage());
+			throw new InvalidTokenException(e.getMessage());
 		} catch (Exception e) {
 			log.error("Error processing JWT token: {}", e.getMessage());
+			request.setAttribute("access_denied", e.getMessage());
+			throw new BadRequestException(e.getMessage());
 		}
 	}
 }

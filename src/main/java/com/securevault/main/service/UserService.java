@@ -94,7 +94,7 @@ public class UserService implements UserDetailsService {
 	public User getOrCreateUnverifiedUser(String email, String name) {
 		try {
 			User existingUser = findByEmail(email);
-			
+
 			return existingUser;
 		} catch (NotFoundException e) {
 			// Create new unverified user
@@ -140,10 +140,11 @@ public class UserService implements UserDetailsService {
 
 			log.info("Registration completed for user: {}", user.getEmail());
 		} catch (Exception e) {
-			log.error("User not found during registration: {}", request.getEmail());
-			throw new BadRequestException(messageSourceService.get("complete_registration_first"));
+			log.error("Error during registration for email: {}", request.getEmail());
+			String errorMessage = e.getMessage() != null ? e.getMessage()
+					: messageSourceService.get("complete_registration_first");
+			throw new BadRequestException(errorMessage);
 		}
-
 	}
 
 	public void incrementFailedLoginAttempts(String email) {

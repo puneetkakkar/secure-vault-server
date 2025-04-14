@@ -31,11 +31,11 @@ public class JwtAuthEntryPoint implements AuthenticationEntryPoint {
 	public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException)
 			throws IOException {
 
-		final String access_denied = (String) request.getAttribute("access_denied");
+		final String accessDeniedMessage = (String) request.getAttribute("access_denied");
 		final String message;
 
-		if (access_denied != null) {
-			message = messageSourceService.get("access_denied");
+		if (accessDeniedMessage != null) {
+			message = accessDeniedMessage;
 		} else {
 			message = messageSourceService.get("unexpected_exception");
 		}

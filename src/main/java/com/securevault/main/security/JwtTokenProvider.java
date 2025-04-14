@@ -18,6 +18,7 @@ import com.securevault.main.service.UserService;
 import com.securevault.main.util.Constants;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
@@ -141,6 +142,9 @@ public class JwtTokenProvider {
 			}
 
 			return new TokenValidationResult(true, null, jwtToken);
+		} catch (ExpiredJwtException e) {
+			log.error("[JWT] Token expired: {}", e.getMessage());
+			return new TokenValidationResult(false, messageSourceService.get("token_expired"));
 		} catch (UnsupportedJwtException e) {
 			log.error("[JWT] Unsupported JWT token: {}", e.getMessage());
 			return new TokenValidationResult(false, messageSourceService.get("invalid_token"));

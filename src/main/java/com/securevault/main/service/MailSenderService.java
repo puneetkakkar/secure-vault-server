@@ -27,7 +27,7 @@ public class MailSenderService {
 	private static final String URL = "url";
 	private static final String LOGO_URL = "logoUrl";
 	private static final String EMAIL_TEMPLATE = "mail/user-email-verification";
-	private static final String EMAIL_VERIFICATION_PATH = "/auth/finish-registration/";
+	private static final String EMAIL_VERIFICATION_PATH = "/finish-registration/";
 	private static final String LOGO_IMAGE_PATH = "static/images/secure-vault-logo-1x.png";
 	private static final String LOGO_CID = "logo";
 

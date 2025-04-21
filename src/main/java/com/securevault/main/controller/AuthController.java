@@ -65,7 +65,7 @@ public class AuthController extends AbstractBaseController {
 					: messageSourceService.get("email_verification_failed");
 
 			if (e.getNextAction() != null) {
-				throw new BadRequestException(exceptionMessage).withNextAction(e.getNextAction(), e.getRedirectUrl());
+				throw new BadRequestException(exceptionMessage).withNextAction(e.getNextAction());
 			}
 
 			throw new BadRequestException(exceptionMessage);
@@ -84,13 +84,17 @@ public class AuthController extends AbstractBaseController {
 	@GetMapping(ApiEndpoints.AUTH_VERIFY_EMAIL_URL)
 	public ResponseEntity<SuccessResponse> verifyEmail(
 			@RequestParam String token,
-			@RequestParam String email) {
+			@RequestParam @Valid String email) {
 		try {
 			emailVerificationService.verifyEmail(token, email);
 			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("email_verified"), null));
 		} catch (BadRequestException e) {
 			log.error("Bad request during email verification: {}", e.getMessage());
-			throw new BadRequestException(messageSourceService.get("invalid_verification"));
+
+			String exceptionMessage = e.getMessage() != null ? e.getMessage()
+					: messageSourceService.get("invalid_verification");
+
+			throw new BadRequestException(exceptionMessage);
 		} catch (NotFoundException e) {
 			log.error("Token not found during email verification: {}", e.getMessage());
 			throw new NotFoundException(messageSourceService.get("verification_link_invalid"));
@@ -144,7 +148,7 @@ public class AuthController extends AbstractBaseController {
 	}
 
 	@GetMapping(ApiEndpoints.AUTH_REFRESH_TOKEN_URL)
-	public ResponseEntity<SuccessResponse> refresh(@CookieValue("refreshToken") @Validated final String refreshToken) {
+	public ResponseEntity<SuccessResponse> refresh(@CookieValue("sv.rftkn") @Validated final String refreshToken) {
 		try {
 			TokenResponse refreshTokenResponse = authService.refreshFromCookie(refreshToken);
 

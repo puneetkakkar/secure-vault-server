@@ -78,7 +78,7 @@ public class AppExceptionHandler {
 		log.error("Bad request: {}", e.getMessage());
 		if (e.getNextAction() != null) {
 			return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, e.getMessage(),
-					NextActionInfo.of(e.getNextAction(), e.getRedirectUrl()));
+					NextActionInfo.of(e.getNextAction()));
 		}
 		return build(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, e.getMessage());
 	}

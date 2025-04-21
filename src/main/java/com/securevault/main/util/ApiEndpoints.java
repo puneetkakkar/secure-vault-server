@@ -5,7 +5,7 @@ public final class ApiEndpoints {
 	public static final String AUTH_FINISH_REGISTRATION_URL = "/finish-registration";
 	public static final String AUTH_LOGIN_URL = "/login";
 	public static final String AUTH_LOGOUT_URL = "/logout";
-	public static final String AUTH_REFRESH_TOKEN_URL = "/refresh";
+	public static final String AUTH_REFRESH_TOKEN_URL = "/refresh-token";
 	public static final String AUTH_SEND_EMAIL_VERIFICATION_URL = "/send-email-verification";
 	public static final String AUTH_VERIFY_EMAIL_URL = "/verify-email";
 

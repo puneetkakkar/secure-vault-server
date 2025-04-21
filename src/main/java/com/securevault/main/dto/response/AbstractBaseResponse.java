@@ -21,8 +21,8 @@ public abstract class AbstractBaseResponse<T extends AbstractBaseResponse<T>> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public T withNextAction(NextAction nextAction, String redirectUrl) {
-		this.nextAction = NextActionInfo.of(nextAction, redirectUrl);
+	public T withNextAction(NextAction nextAction) {
+		this.nextAction = NextActionInfo.of(nextAction);
 		return (T) this;
 	}
 }

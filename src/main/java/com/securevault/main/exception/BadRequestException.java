@@ -23,9 +23,9 @@ public class BadRequestException extends RuntimeException {
 		super(message);
 	}
 
-	public BadRequestException withNextAction(NextAction nextAction, String redirectUrl) {
+	public BadRequestException withNextAction(NextAction nextAction) {
 		this.nextAction = nextAction;
-		this.redirectUrl = redirectUrl;
+		this.redirectUrl = nextAction.getRedirectUrl();
 		return this;
 	}
 

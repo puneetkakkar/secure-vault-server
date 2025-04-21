@@ -161,15 +161,8 @@ public class AuthService {
 		}
 	}
 
-	public void logout(User user, final String bearer) {
+	public void logout(User user, final String token) {
 		log.info("Logout request received for user: {}", user.getEmail());
-
-		// Extract token from bearer
-		String token = jwtTokenProvider.extractJwtFromBearerString(bearer);
-		if (token == null) {
-			log.error("Invalid bearer token format");
-			throw new InvalidTokenException(messageSourceService.get("invalid_token"));
-		}
 
 		// Find token in database
 		JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(token);
@@ -232,7 +225,7 @@ public class AuthService {
 	private void setRefreshTokenCookie(String refreshToken) {
 		int maxAgeInSeconds = (int) Math.min(jwtTokenProvider.getRefreshTokenExpiresIn(), Integer.MAX_VALUE);
 
-		ResponseCookie jwtCookie = ResponseCookie.from("refreshToken", refreshToken)
+		ResponseCookie jwtCookie = ResponseCookie.from("sv.rftkn", refreshToken)
 				.domain(cookieDomain)
 				.path(cookiePath)
 				.httpOnly(isCookieHttpOnly)
@@ -245,7 +238,7 @@ public class AuthService {
 	}
 
 	private void clearRefreshTokenCookie() {
-		ResponseCookie jwtCookie = ResponseCookie.from("refreshToken", "")
+		ResponseCookie jwtCookie = ResponseCookie.from("sv.rftkn", "")
 				.domain(cookieDomain)
 				.path(cookiePath)
 				.httpOnly(isCookieHttpOnly)

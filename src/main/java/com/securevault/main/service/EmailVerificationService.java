@@ -42,7 +42,7 @@ public class EmailVerificationService {
 
 		if (user.getEmailVerifiedAt() != null) {
 			throw new BadRequestException(messageSourceService.get("email_already_verified"))
-					.withNextAction(NextAction.REDIRECT_TO_FINISH_REGISTRATION, "/auth/finish-registration");
+					.withNextAction(NextAction.REDIRECT_TO_FINISH_REGISTRATION);
 		}
 
 		sendVerificationEmail(user);
@@ -51,25 +51,25 @@ public class EmailVerificationService {
 	public void verifyEmail(String token, String email) {
 		log.info("Verifying email with token: {} for email: {}", token, email);
 
+		User user = userService.findByEmail(email);
+
+		if (user.getEmailVerifiedAt() != null) {
+			throw new BadRequestException(messageSourceService.get("email_already_verified"));
+		}
+
 		EmailVerificationToken verificationToken = tokenRepository.findByToken(token)
 				.orElseThrow(() -> new NotFoundException(
 						messageSourceService.get("not_found_with_param",
 								new String[] { messageSourceService.get("token") })));
 
+		if (!verificationToken.getUser().getId().equals(user.getId())) {
+			throw new BadRequestException(messageSourceService.get("invalid_verification"));
+		}
+
 		if (verificationToken.isExpired()) {
 			throw new BadRequestException(
 					messageSourceService.get("expired_with_param",
 							new String[] { messageSourceService.get("token") }));
-		}
-
-		User user = verificationToken.getUser();
-
-		if (!user.getEmail().equals(email)) {
-			throw new BadRequestException(messageSourceService.get("invalid_verification"));
-		}
-
-		if (user.getEmailVerifiedAt() != null) {
-			throw new BadRequestException(messageSourceService.get("email_already_verified"));
 		}
 
 		userService.markEmailAsVerified(user);

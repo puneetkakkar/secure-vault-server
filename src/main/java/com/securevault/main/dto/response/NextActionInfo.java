@@ -11,10 +11,10 @@ public class NextActionInfo {
 	private final String type;
 	private final String redirectUrl;
 
-	public static NextActionInfo of(NextAction action, String redirectUrl) {
+	public static NextActionInfo of(NextAction action) {
 		return NextActionInfo.builder()
 				.type(action.getAction())
-				.redirectUrl(redirectUrl)
+				.redirectUrl(action.getRedirectUrl())
 				.build();
 	}
 }

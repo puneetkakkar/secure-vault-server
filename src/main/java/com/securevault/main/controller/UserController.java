@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.securevault.main.configuration.api.ApiVersion;
 import com.securevault.main.dto.response.SuccessResponse;
 import com.securevault.main.exception.BadRequestException;
-import com.securevault.main.exception.InvalidTokenException;
 import com.securevault.main.service.MessageSourceService;
 import com.securevault.main.util.ApiEndpoints;
 

@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.securevault.main.dto.response.auth.TokenExpiresInResponse;
 import com.securevault.main.dto.response.auth.TokenResponse;
@@ -161,29 +162,26 @@ public class AuthService {
 		}
 	}
 
-	public void logout(User user, final String token) {
-		log.info("Logout request received for user: {}", user.getEmail());
-
-		// Find token in database
-		JwtToken jwtToken = jwtTokenService.findByTokenOrRefreshToken(token);
-		if (jwtToken == null) {
-			log.error("Token not found in database");
-			throw new InvalidTokenException(messageSourceService.get("invalid_token"));
-		}
-
-		// Verify token belongs to user
-		if (!user.getId().equals(jwtToken.getUserId())) {
-			log.error("Token user mismatch. Expected: {}, Actual: {}", user.getId(), jwtToken.getUserId());
-			throw new InvalidTokenException(messageSourceService.get("invalid_token"));
-		}
-
-		// Delete the token
-		jwtTokenService.delete(jwtToken);
+	@Transactional
+	public void logout(final String token) {
+		log.info("Logout request received. Token {}", token);
 
 		// Clear refresh token cookie
 		clearRefreshTokenCookie();
 
-		log.info("User {} successfully logged out", user.getEmail());
+		if (token == null || token.isBlank()) {
+			log.warn("No token provided during logout. No DB action needed.");
+			return;
+		}
+
+		jwtTokenService.tryFindByTokenOrRefreshToken(token)
+				.ifPresentOrElse(
+						jwtToken -> {
+							jwtTokenService.delete(jwtToken);
+							log.info("Token invalidated successfully during logout.");
+						},
+						() -> log.warn("Token not found in DB during logout. Proceeding gracefully."));
+
 	}
 
 	private TokenResponse generateAndStoreTokens(final UUID userId, final Boolean rememberMe) {

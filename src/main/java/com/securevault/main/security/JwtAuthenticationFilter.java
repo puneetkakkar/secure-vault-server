@@ -16,6 +16,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import com.securevault.main.exception.BadRequestException;
 import com.securevault.main.exception.InvalidTokenException;
 import com.securevault.main.service.UserService;
+import com.securevault.main.util.ApiEndpoints;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -44,6 +45,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String token = jwtTokenProvider.extractJwtFromRequest(request);
 
 		try {
+
+			// Skip validation for logout endpoint
+			if (request.getRequestURI().matches("/api/v\\d+/auth" + ApiEndpoints.AUTH_LOGOUT_URL)) {
+				filterChain.doFilter(request, response);
+				return;
+			}
+
 			if (StringUtils.hasText(token)) {
 				// Validate token and get validation result
 				JwtTokenProvider.TokenValidationResult validationResult = jwtTokenProvider.validateToken(token);
@@ -67,7 +75,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			}
 
 			filterChain.doFilter(request, response);
-		} catch (AccessDeniedException e) {
+		} catch (
+
+		AccessDeniedException e) {
 			throw new AccessDeniedException(e.getMessage());
 		} catch (InvalidTokenException e) {
 			log.error("Invalid token: {}", e.getMessage());

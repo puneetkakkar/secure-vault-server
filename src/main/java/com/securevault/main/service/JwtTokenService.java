@@ -1,5 +1,6 @@
 package com.securevault.main.service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -23,6 +24,10 @@ public class JwtTokenService {
 				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("token") })));
 	}
 
+	public Optional<JwtToken> tryFindByTokenOrRefreshToken(String token) {
+		return jwtTokenRepository.findByTokenOrRefreshToken(token, token);
+	}
+
 	public JwtToken findByUserIdAndRefreshToken(UUID id, String refreshToken) {
 		return jwtTokenRepository.findByUserIdAndRefreshToken(id, refreshToken).orElseThrow(() -> new NotFoundException(
 				messageSourceService.get("not_found_with_param", new String[] { messageSourceService.get("token") })));
@@ -34,11 +39,6 @@ public class JwtTokenService {
 				.orElse(false);
 	}
 
-	/**
-	 * Save a JWT token
-	 * 
-	 * @param jwtToken
-	 */
 	public void save(JwtToken jwtToken) {
 		jwtTokenRepository.save(jwtToken);
 		log.info("Saved token for user: {}", jwtToken.getUserId());

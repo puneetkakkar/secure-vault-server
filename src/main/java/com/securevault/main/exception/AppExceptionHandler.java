@@ -122,7 +122,8 @@ public class AppExceptionHandler {
 			TokenReuseException.class,
 			InternalAuthenticationServiceException.class,
 			BadCredentialsException.class,
-			AuthenticationCredentialsNotFoundException.class
+			AuthenticationCredentialsNotFoundException.class,
+			UnauthorizedException.class
 	})
 	public final ResponseEntity<ErrorResponse> handleAuthenticationExceptions(final Exception e) {
 		log.error("Authentication error: {}", e.getMessage());

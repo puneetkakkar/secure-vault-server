@@ -25,6 +25,7 @@ import com.securevault.main.exception.InvalidCredentialsException;
 import com.securevault.main.exception.InvalidTokenException;
 import com.securevault.main.exception.NotFoundException;
 import com.securevault.main.exception.TokenReuseException;
+import com.securevault.main.exception.UnauthorizedException;
 import com.securevault.main.exception.UnverifiedEmailException;
 import com.securevault.main.security.JwtTokenProvider;
 import com.securevault.main.service.AuthService;
@@ -155,39 +156,26 @@ public class AuthController extends AbstractBaseController {
 			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("token_refreshed"), refreshTokenResponse));
 		} catch (InvalidTokenException e) {
 			log.error("Invalid refresh token");
-			throw new BadRequestException(messageSourceService.get("invalid_refresh_token"));
+			throw new InvalidTokenException(messageSourceService.get("invalid_refresh_token"));
 		} catch (TokenReuseException e) {
 			log.error("Refresh token reuse attempt");
-			throw new BadRequestException(messageSourceService.get("token_reuse_detected"));
+			throw new TokenReuseException(messageSourceService.get("token_reuse_detected"));
 		} catch (NotFoundException e) {
 			log.error("User not found for refresh token");
-			throw new NotFoundException(messageSourceService.get("user_not_found"));
+			throw new UnauthorizedException(messageSourceService.get("user_not_found"));
 		} catch (Exception e) {
 			log.error("Unexpected error during token refresh: {}", e.getMessage());
-			throw new BadRequestException(messageSourceService.get("service_unavailable"));
+			throw new UnauthorizedException(messageSourceService.get("unauthorized"));
 		}
 	}
 
 	@GetMapping(ApiEndpoints.AUTH_LOGOUT_URL)
 	public ResponseEntity<SuccessResponse> logout() {
-		try {
-			// Get the token from request header
-			String token = jwtTokenProvider.extractJwtFromRequest(httpServletRequest);
-			if (token == null) {
-				log.error("No token found in request header");
-				throw new InvalidTokenException(messageSourceService.get("invalid_token"));
-			}
+		String token = jwtTokenProvider.extractJwtFromRequest(httpServletRequest);
 
-			authService.logout(userService.getUser(), token);
+		authService.logout(token);
 
-			return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("logout_successfully"), null));
-		} catch (NotFoundException e) {
-			log.error("User not found during logout");
-			throw new NotFoundException(messageSourceService.get("user_not_found"));
-		} catch (Exception e) {
-			log.error("Unexpected error during logout: {}", e.getMessage());
-			throw new BadRequestException(messageSourceService.get("service_unavailable"));
-		}
+		return ResponseEntity.ok(SuccessResponse.of(messageSourceService.get("logout_successfully"), null));
 	}
 
 	@GetMapping("/dummy")

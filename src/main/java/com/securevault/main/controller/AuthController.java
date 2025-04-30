@@ -162,7 +162,7 @@ public class AuthController extends AbstractBaseController {
 			throw new TokenReuseException(messageSourceService.get("token_reuse_detected"));
 		} catch (NotFoundException e) {
 			log.error("User not found for refresh token");
-			throw new UnauthorizedException(messageSourceService.get("user_not_found"));
+			throw new UnauthorizedException(messageSourceService.get("unauthorized"));
 		} catch (Exception e) {
 			log.error("Unexpected error during token refresh: {}", e.getMessage());
 			throw new UnauthorizedException(messageSourceService.get("unauthorized"));

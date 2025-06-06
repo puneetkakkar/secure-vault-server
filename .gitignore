@@ -5,7 +5,7 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 dev-env.properties
-env.properties
+prod-env.properties
 
 ### STS ###
 .apt_generated

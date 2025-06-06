@@ -1,0 +1,49 @@
+# Application Configuration
+APP_NAME=Secure Vault
+API_URI_PREFIX=/api
+SERVER_URL=https://your-production-domain.com
+FRONTEND_URL=https://your-frontend-domain.com
+
+# MongoDB Configuration
+MONGO_DATABASE=vault-db
+MONGO_INITDB_ROOT_USERNAME=admin
+MONGO_INITDB_ROOT_PASSWORD=change_me_in_production
+MONGO_URI=mongodb://admin:change_me_in_production@mongodb:27017/vault-db?authSource=vault-db
+
+# Redis Configuration (Sentinel Mode for Production)
+REDIS_MODE=sentinel
+REDIS_SENTINEL_MASTER=mymaster
+REDIS_SENTINEL_NODES=redis-sentinel-1:26379,redis-sentinel-2:26380,redis-sentinel-3:26381
+REDIS_DATABASE=0
+REDIS_HOST=redis-master
+REDIS_PORT=6379
+REDIS_PASSWORD=change_me_in_production
+REDIS_TIMEOUT=60000
+
+# Email Configuration
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-production-email@gmail.com
+MAIL_PASSWORD=your-production-app-specific-password
+
+# Security Configuration
+# PBKDF2 Configuration for Password Hashing
+PBKDF2_SECRET=change_me_in_production_environment
+PBKDF2_SALT_LENGTH=600000
+PBKDF2_ITERATIONS=256
+
+# JWT Configuration
+JWT_SECRET=change_me_in_production_environment
+# 15 minutes
+JWT_TOKEN_EXPIRES_IN=#{60 * 15 * 1000}
+# 24 hours
+JWT_REFRESH_TOKEN_EXPIRES_IN=#{24 * 60 * 60 * 1000}
+# 7 days
+JWT_REMEMBER_ME_EXPIRES_IN=#{24 * 60 * 60 * 1000 * 7}
+# 24 hours
+REGISTRATION_EMAIL_TOKEN_EXPIRES_IN=#{24 * 60 * 60 * 1000}
+
+# Cookie Configuration
+COOKIE_REFRESH_DOMAIN=your-production-domain.com
+COOKIE_REFRESH_PATH=/
+COOKIE_REFRESH_SAME_SITE=strict 

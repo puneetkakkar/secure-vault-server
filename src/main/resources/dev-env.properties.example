@@ -1,0 +1,47 @@
+# Application Configuration
+APP_NAME=Secure Vault
+API_URI_PREFIX=/api
+SERVER_URL=http://localhost:8080
+FRONTEND_URL=http://localhost:3000
+
+# MongoDB Configuration
+MONGO_DATABASE=vault-db
+MONGO_INITDB_ROOT_USERNAME=admin
+MONGO_INITDB_ROOT_PASSWORD=change_me_in_dev
+MONGO_URI=mongodb://admin:change_me_in_dev@mongodb:27017/vault-db?authSource=vault-db
+
+# Redis Configuration (Single Instance for Development)
+REDIS_MODE=standalone
+REDIS_DATABASE=0
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_PASSWORD=change_me_in_dev
+REDIS_TIMEOUT=60000
+
+# Email Configuration
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-specific-password
+
+# Security Configuration
+# PBKDF2 Configuration for Password Hashing
+PBKDF2_SECRET=change_me_in_dev_environment
+PBKDF2_SALT_LENGTH=600000
+PBKDF2_ITERATIONS=256
+
+# JWT Configuration
+JWT_SECRET=change_me_in_dev_environment
+# 15 minutes
+JWT_TOKEN_EXPIRES_IN=#{60 * 15 * 1000}
+# 24 hours
+JWT_REFRESH_TOKEN_EXPIRES_IN=#{24 * 60 * 60 * 1000}
+# 7 days
+JWT_REMEMBER_ME_EXPIRES_IN=#{24 * 60 * 60 * 1000 * 7}
+# 24 hours
+REGISTRATION_EMAIL_TOKEN_EXPIRES_IN=#{24 * 60 * 60 * 1000}
+
+# Cookie Configuration
+COOKIE_REFRESH_DOMAIN=localhost
+COOKIE_REFRESH_PATH=/
+COOKIE_REFRESH_SAME_SITE=strict 

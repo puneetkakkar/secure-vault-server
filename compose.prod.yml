@@ -2,7 +2,7 @@ services:
   mongodb:
     image: mongo:latest
     env_file:
-      - ./src/main/resources/env.properties
+      - ./src/main/resources/prod-env.properties
     ports:
       - "27018:27017"
     volumes:
@@ -209,7 +209,7 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=production
     volumes:
-      - ./src/main/resources/env.properties:/app/src/main/resources/env.properties:ro
+      - ./src/main/resources/prod-env.properties:/app/src/main/resources/prod-env.properties:ro
     ports:
       - "8080:8080"
     depends_on:

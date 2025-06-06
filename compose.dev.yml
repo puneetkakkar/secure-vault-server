@@ -1,0 +1,82 @@
+services:
+  mongodb:
+    image: mongo:latest
+    env_file:
+      - ./src/main/resources/dev-env.properties
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb-data-dev:/data/db
+    networks:
+      - secure-vault-network
+    command: mongod --auth --bind_ip_all
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    env_file:
+      - ./src/main/resources/dev-env.properties
+    ports:
+      - "6380:6379"
+    command: >
+      sh -c 'redis-server --requirepass "$$REDIS_PASSWORD"'
+    volumes:
+      - redis-data-dev:/data
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: >
+        sh -c 'redis-cli -a "$$REDIS_PASSWORD" ping'
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  spring-boot-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    env_file:
+      - ./src/main/resources/dev-env.properties
+    environment:
+      - SPRING_PROFILES_ACTIVE=development
+    volumes:
+      - ./src/main/resources/dev-env.properties:/app/src/main/resources/dev-env.properties:ro
+      - ./src:/app/src
+    ports:
+      - "8080:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    tty: true
+    stdin_open: true
+
+volumes:
+  mongodb-data-dev:
+    name: mongodb-data-dev
+    external: false
+  redis-data-dev:
+    name: redis-data-dev
+    external: false
+
+networks:
+  secure-vault-network:
+    name: secure-vault-network-dev
+    driver: bridge

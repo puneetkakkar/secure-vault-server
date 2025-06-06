@@ -16,20 +16,36 @@ spring:
       enabled: true
   docker:
     compose:
-      file: ./compose.yml
+      enabled: false
   messages:
     basename: locales/message
   data:
     mongodb:
       database: ${MONGO_DATABASE}
+      username: ${MONGO_INITDB_ROOT_USERNAME}
+      password: ${MONGO_INITDB_ROOT_PASSWORD}
       uri: ${MONGO_URI}
       uuid-representation: standard
     redis:
+      mode: sentinel
+      sentinel:
+        master: ${REDIS_SENTINEL_MASTER}
+        nodes: ${REDIS_SENTINEL_NODES}
       database: ${REDIS_DATABASE}
       host: ${REDIS_HOST}
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
       timeout: ${REDIS_TIMEOUT}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+      connect-timeout: 5000ms
+      client-type: lettuce
+      notify-keyspace-events: "Ex"
   mail:
     host: ${MAIL_HOST}
     port: ${MAIL_PORT}
@@ -64,6 +80,9 @@ logging:
         data: WARN
         mail: INFO
     mongodb: WARN
+    redis:
+      clients:
+        lettuce: DEBUG
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss}){faint} %clr([%thread]){magenta} %clr(%-5level) %clr(%logger{36}){cyan} - %msg%n"
   file:

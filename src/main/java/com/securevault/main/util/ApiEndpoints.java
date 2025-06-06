@@ -11,4 +11,9 @@ public final class ApiEndpoints {
 
 	public static final String USER_BASE_URL = "/user";
 	public static final String USER_GET_AUTHENTICATED_USER_URL = "/me";
+
+	public static final String HEALTH_BASE_URL = "/health";
+	public static final String HEALTH_CHECK_URL = "/check";
+	public static final String HEALTH_LIVENESS_URL = "/live";
+	public static final String HEALTH_READINESS_URL = "/ready";
 }

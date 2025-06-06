@@ -24,46 +24,129 @@
 
 ## Getting Started:
 
-**Prerequisites:**
+### Prerequisites:
 
 * **Java Development Kit (JDK):** Ensure you have a compatible JDK installed (version 11 or higher).
 * **Maven:** Make sure you have Apache Maven installed.
+* **Docker and Docker Compose:** Required for running the application in containers.
 * **IDE:**  You'll need an IDE of your choice (e.g., IntelliJ IDEA, Eclipse, VS Code) to work with the project.
 
-**Steps:**
+### Development Setup:
+
+#### Option 1: Local Development
 
 1. **Clone the repository:**
    ```bash
-   # Clone this repository to your local machine.
    git clone https://github.com/puneetkakkar/secure-vault-server
+   ```
 
 2. **Navigate to the project directory:**
-    ```bash
-    # Navigate to the required project\'s folder
-    cd secure-vault-server
+   ```bash
+   cd secure-vault-server
+   ```
 
 3. **Install dependencies:**
-    ```bash
-    # Install required packages
-    mvn clean install
+   ```bash
+   mvn clean install
+   ```
 
 4. **Build the application:**
-    ```bash
-    # Build the packages.
-    mvn package
+   ```bash
+   mvn package
+   ```
 
 5. **Run the application:**
-    ```bash
-    # Run the application\'s default spring boot server
-    mvn spring-boot:run
+   ```bash
+   mvn spring-boot:run
+   ```
 
 The Secure Vault application will be accessible at http://localhost:8080 by default.
+
+#### Option 2: Docker Development Setup
+
+1. **Create environment file:**
+   ```bash
+   cp src/main/resources/dev-env.properties.example src/main/resources/dev-env.properties
+   ```
+
+2. **Build and start the development containers:**
+   ```bash
+   docker-compose -f compose.dev.yml up -d
+   ```
+
+3. **Verify the services:**
+   ```bash
+   docker-compose -f compose.dev.yml ps
+   ```
+
+The development stack includes:
+- Spring Boot Backend (port 8080)
+- MongoDB (port 27017)
+- Redis (port 6379)
+
+### Production Setup with Docker:
+
+1. **Create environment file:**
+   ```bash
+   cp src/main/resources/env.properties.example src/main/resources/env.properties
+   ```
+
+2. **Build and start the production containers:**
+   ```bash
+   docker-compose -f compose.prod.yml up -d
+   ```
+
+3. **Verify the services:**
+   ```bash
+   docker-compose -f compose.prod.yml ps
+   ```
+
+The production stack includes:
+- Spring Boot Backend (port 8080)
+- MongoDB (port 27018)
+- Redis Master (port 6382)
+- Redis Slaves (ports 6383, 6384)
+- Redis Sentinels (ports 26382, 26383, 26384)
+
+### Architecture:
+
+The application uses a microservices architecture with:
+
+#### Development Environment:
+- **Spring Boot Backend:** Main application server
+- **MongoDB:** Primary database for data storage
+- **Redis:** Single instance for caching and session management
+
+#### Production Environment:
+- **Spring Boot Backend:** Main application server
+- **MongoDB:** Primary database for data storage
+- **Redis Cluster:** 
+  - Master-Slave replication (1 master, 2 slaves)
+  - Sentinel-based high availability (3 sentinels)
+  - Automatic failover support
+
+### Environment Configuration:
+
+Both development and production environments require proper configuration through environment variables. The main differences are:
+
+1. **Development (`compose.dev.yml`):**
+   - Single Redis instance
+   - Standard MongoDB port
+   - Development-specific Spring profiles
+   - Hot-reload enabled for development
+
+2. **Production (`compose.prod.yml`):**
+   - Redis cluster with master-slave replication
+   - Redis sentinel for high availability
+   - Custom MongoDB port
+   - Production-specific Spring profiles
+   - Optimized for performance and security
 
 ## Contributing
 
 We encourage you to contribute to Secure Vault's development!
 
-* **Report issues:** Find a bug or have a suggestion. Please submit an issue on GitHub.
+* **Report issues:** Find a bug or have a suggestion? Please submit an issue on GitHub.
 * **Submit pull requests:**  Want to add a feature or fix a bug? Submit a pull request to our repository.
 * **Join the community:**  Connect with other developers.
 

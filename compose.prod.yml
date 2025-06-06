@@ -1,0 +1,250 @@
+services:
+  mongodb:
+    image: mongo:latest
+    env_file:
+      - ./src/main/resources/env.properties
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb-data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-master:
+    image: redis:latest
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--repl-diskless-load",
+        "on-empty-db",
+        "--protected-mode",
+        "no",
+        "--bind",
+        "0.0.0.0",
+      ]
+    ports:
+      - "6382:6379"
+    volumes:
+      - redis-master-data:/data
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-slave-1:
+    image: redis:latest
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--replicaof",
+        "redis-master",
+        "6379",
+        "--repl-diskless-load",
+        "on-empty-db",
+        "--protected-mode",
+        "no",
+        "--bind",
+        "0.0.0.0",
+      ]
+    ports:
+      - "6383:6379"
+    volumes:
+      - redis-slave-1-data:/data
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-slave-2:
+    image: redis:latest
+    command:
+      [
+        "redis-server",
+        "--appendonly",
+        "yes",
+        "--replicaof",
+        "redis-master",
+        "6379",
+        "--repl-diskless-load",
+        "on-empty-db",
+        "--protected-mode",
+        "no",
+        "--bind",
+        "0.0.0.0",
+      ]
+    ports:
+      - "6384:6379"
+    volumes:
+      - redis-slave-2-data:/data
+    depends_on:
+      redis-master:
+        condition: service_healthy
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-sentinel-1:
+    image: redis:latest
+    command: >
+      sh -c '
+      echo "port 26379" > /etc/sentinel.conf &&
+      echo "dir /tmp" >> /etc/sentinel.conf &&
+      echo "bind 0.0.0.0" >> /etc/sentinel.conf &&
+      echo "sentinel monitor mymaster redis-master 6379 2" >> /etc/sentinel.conf &&
+      echo "sentinel down-after-milliseconds mymaster 5000" >> /etc/sentinel.conf &&
+      echo "sentinel parallel-syncs mymaster 1" >> /etc/sentinel.conf &&
+      echo "sentinel failover-timeout mymaster 10000" >> /etc/sentinel.conf &&
+      echo "sentinel resolve-hostnames yes" >> /etc/sentinel.conf &&
+      echo "sentinel announce-hostnames yes" >> /etc/sentinel.conf &&
+      redis-sentinel /etc/sentinel.conf
+      '
+    ports:
+      - "26382:26379"
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-slave-1:
+        condition: service_healthy
+      redis-slave-2:
+        condition: service_healthy
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-sentinel-2:
+    image: redis:latest
+    command: >
+      sh -c '
+      echo "port 26380" > /etc/sentinel.conf &&
+      echo "dir /tmp" >> /etc/sentinel.conf &&
+      echo "bind 0.0.0.0" >> /etc/sentinel.conf &&
+      echo "sentinel monitor mymaster redis-master 6379 2" >> /etc/sentinel.conf &&
+      echo "sentinel down-after-milliseconds mymaster 5000" >> /etc/sentinel.conf &&
+      echo "sentinel parallel-syncs mymaster 1" >> /etc/sentinel.conf &&
+      echo "sentinel failover-timeout mymaster 10000" >> /etc/sentinel.conf &&
+      echo "sentinel resolve-hostnames yes" >> /etc/sentinel.conf &&
+      echo "sentinel announce-hostnames yes" >> /etc/sentinel.conf &&
+      redis-sentinel /etc/sentinel.conf
+      '
+    ports:
+      - "26383:26380"
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-slave-1:
+        condition: service_healthy
+      redis-slave-2:
+        condition: service_healthy
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26380", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-sentinel-3:
+    image: redis:latest
+    command: >
+      sh -c '
+      echo "port 26381" > /etc/sentinel.conf &&
+      echo "dir /tmp" >> /etc/sentinel.conf &&
+      echo "bind 0.0.0.0" >> /etc/sentinel.conf &&
+      echo "sentinel monitor mymaster redis-master 6379 2" >> /etc/sentinel.conf &&
+      echo "sentinel down-after-milliseconds mymaster 5000" >> /etc/sentinel.conf &&
+      echo "sentinel parallel-syncs mymaster 1" >> /etc/sentinel.conf &&
+      echo "sentinel failover-timeout mymaster 10000" >> /etc/sentinel.conf &&
+      echo "sentinel resolve-hostnames yes" >> /etc/sentinel.conf &&
+      echo "sentinel announce-hostnames yes" >> /etc/sentinel.conf &&
+      redis-sentinel /etc/sentinel.conf
+      '
+    ports:
+      - "26384:26381"
+    depends_on:
+      redis-master:
+        condition: service_healthy
+      redis-slave-1:
+        condition: service_healthy
+      redis-slave-2:
+        condition: service_healthy
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "26381", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  spring-boot-backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_PROFILES_ACTIVE=production
+    volumes:
+      - ./src/main/resources/env.properties:/app/src/main/resources/env.properties:ro
+    ports:
+      - "8080:8080"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis-master:
+        condition: service_healthy
+      redis-sentinel-1:
+        condition: service_healthy
+      redis-sentinel-2:
+        condition: service_healthy
+      redis-sentinel-3:
+        condition: service_healthy
+    networks:
+      - secure-vault-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  mongodb-data:
+    name: mongodb-data
+  redis-master-data:
+    name: redis-master-data
+  redis-slave-1-data:
+    name: redis-slave-1-data
+  redis-slave-2-data:
+    name: redis-slave-2-data
+
+networks:
+  secure-vault-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16

@@ -22,7 +22,7 @@ services:
       - ./src/main/resources/dev-env.properties
     ports:
       - "6380:6379"
-    command: >
+    command: |
       sh -c 'redis-server --requirepass "$$REDIS_PASSWORD"'
     volumes:
       - redis-data-dev:/data

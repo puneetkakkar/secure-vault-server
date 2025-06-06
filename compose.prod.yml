@@ -108,7 +108,7 @@ services:
 
   redis-sentinel-1:
     image: redis:latest
-    command: >
+    command: |
       sh -c '
       echo "port 26379" > /etc/sentinel.conf &&
       echo "dir /tmp" >> /etc/sentinel.conf &&
@@ -140,7 +140,7 @@ services:
 
   redis-sentinel-2:
     image: redis:latest
-    command: >
+    command: |
       sh -c '
       echo "port 26380" > /etc/sentinel.conf &&
       echo "dir /tmp" >> /etc/sentinel.conf &&
@@ -172,7 +172,7 @@ services:
 
   redis-sentinel-3:
     image: redis:latest
-    command: >
+    command: |
       sh -c '
       echo "port 26381" > /etc/sentinel.conf &&
       echo "dir /tmp" >> /etc/sentinel.conf &&

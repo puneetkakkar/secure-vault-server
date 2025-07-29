@@ -10,14 +10,14 @@ RUN apt-get update && \
 # Copy pom.xml
 COPY pom.xml ./
 
-# Download dependencies
-RUN mvn dependency:go-offline
+# Download dependencies and plugins
+RUN mvn dependency:go-offline -B
 
 # Copy the source code
 COPY src ./src
 
 # Build the application
-RUN mvn package -DskipTests
+RUN mvn clean package -DskipTests -B
 
 # Expose the application port
 EXPOSE 8080

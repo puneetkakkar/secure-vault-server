@@ -97,6 +97,10 @@ app:
     email:
       token:
         expires-in: ${REGISTRATION_EMAIL_TOKEN_EXPIRES_IN}
+  redis:
+    cleanup:
+      enabled: ${REDIS_CLEANUP_ENABLED:true}
+      interval: ${REDIS_CLEANUP_INTERVAL:60000}
   url: ${SERVER_URL}
   frontend-url: ${FRONTEND_URL}
 

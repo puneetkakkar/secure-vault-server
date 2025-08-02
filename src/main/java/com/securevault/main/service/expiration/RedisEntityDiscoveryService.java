@@ -168,7 +168,7 @@ public class RedisEntityDiscoveryService {
      * @return EntityMetadata containing information about the entity
      */
     public EntityMetadata extractEntityMetadata(Class<?> entityClass) {
-        Set<String> indexedFields = ConcurrentHashMap.newKeySet();
+        Set<String> indexedFields = new HashSet<>();
         boolean hasTtl = false;
         String hashName = null;
 

@@ -179,9 +179,7 @@ public class RedisCleanupService {
                             continue;
                         }
 
-                        String keyType = keyTypeResult.name();
-
-                        if ("SET".equals(keyType)) {
+                        if (keyTypeResult == DataType.SET) {
                             // For SET type, check if the corresponding hash table exists
                             // Extract entity ID from the key (e.g., "jwt_tokens:UUID:idx" ->
                             // "jwt_tokens:UUID")
@@ -213,7 +211,8 @@ public class RedisCleanupService {
                                 }
                             }
                         } else {
-                            log.warn("Entity key {} is of unsupported type: {}, skipping", entityHashKey, keyType);
+                            log.warn("Entity key {} is of unsupported type: {}, skipping", entityHashKey,
+                                    keyTypeResult);
                         }
                     } catch (Exception e) {
                         log.warn("Error checking entity hash key {}: {}", entityHashKey, e.getMessage());

@@ -1,6 +1,5 @@
 package com.securevault.main.service.expiration;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -87,10 +86,7 @@ public class RedisCleanupService {
 
             // Clean up stale entity hashes and update main set
             totalCleaned += cleanupStaleEntityHashes(hashName);
-            
-            // Also clean up any orphaned entity hashes that aren't in the main set
-            // totalCleaned += cleanupOrphanedEntityHashes(hashName);
-            
+
             // Clean up indexed fields
             for (String fieldName : metadata.getIndexedFieldNames()) {
                 try {
@@ -141,19 +137,11 @@ public class RedisCleanupService {
                 String entityId = new String(entityIdByteArray);
                 String entityHashKey = hashName + ":" + entityId + ":idx";
 
-                // Check if the entity hash key exists and get its TTL
+                // Check if the entity hash key exists
                 Boolean exists = redisTemplate.hasKey(entityHashKey);
-                Long ttl = redisTemplate.getExpire(entityHashKey);
 
-                log.debug("Entity hash key: {}, exists: {}, ttl: {}", entityHashKey, exists, ttl);
-
-                // If the key doesn't exist or has expired TTL, clean it up
+                // If the key doesn't exist, remove from main set
                 if (exists != null && !exists) {
-                    // Remove the entity hash if it still exists but is expired
-                    // if (exists != null && exists) {
-                    redisTemplate.delete(entityHashKey);
-                    // }
-
                     // Remove from main set
                     Long removed = connectionFactory
                             .getConnection()
@@ -164,79 +152,64 @@ public class RedisCleanupService {
                         totalCleaned += removed;
                     }
                 }
+                // If the key exists, check if it's empty (all internal data expired)
+                else if (exists != null && exists) {
+                    try {
+                        // First check the type of the key
+                        var keyTypeResult = connectionFactory
+                                .getConnection()
+                                .keyCommands()
+                                .type(entityHashKey.getBytes());
+                        
+                        if (keyTypeResult == null) {
+                            log.warn("Could not determine type for key: {}", entityHashKey);
+                            continue;
+                        }
+                        
+                        String keyType = keyTypeResult.name();
+
+                        if ("SET".equals(keyType)) {
+                            // For SET type, check if the corresponding hash table exists
+                            // Extract entity ID from the key (e.g., "jwt_tokens:UUID:idx" ->
+                            // "jwt_tokens:UUID")
+                            String[] parts = entityHashKey.split(":");
+                            if (parts.length >= 2) {
+                                String setId = parts[1];
+                                String correspondingHashKey = hashName + ":" + setId;
+
+                                // Check if the corresponding hash table exists
+                                Boolean hashExists = redisTemplate.hasKey(correspondingHashKey);
+
+                                if (hashExists != null && !hashExists) {
+                                    // The corresponding hash table doesn't exist (expired), remove the set
+                                    Boolean deleted = redisTemplate.delete(entityHashKey);
+                                    if (deleted != null && deleted) {
+                                        log.debug("Removed stale entity set: {} (corresponding hash expired)",
+                                                entityHashKey);
+                                    }
+
+                                    // Remove from main set
+                                    Long removed = connectionFactory
+                                            .getConnection()
+                                            .setCommands()
+                                            .sRem(hashName.getBytes(), entityIdByteArray);
+
+                                    if (removed != null && removed > 0) {
+                                        totalCleaned += removed;
+                                    }
+                                }
+                            }
+                        } else {
+                            log.warn("Entity key {} is of unsupported type: {}, skipping", entityHashKey, keyType);
+                        }
+                    } catch (Exception e) {
+                        log.warn("Error checking entity hash key {}: {}", entityHashKey, e.getMessage());
+                    }
+                }
             }
 
         } catch (Exception e) {
             log.warn("Error cleaning up entity hashes: {}", hashName, e);
-        }
-
-        return totalCleaned;
-    }
-
-    /**
-     * Clean up orphaned entity hashes that exist but aren't in the main set
-     * 
-     * @param hashName The hash name (e.g., "jwt_tokens")
-     * @return Number of cleaned entries
-     */
-    private int cleanupOrphanedEntityHashes(String hashName) {
-        int totalCleaned = 0;
-
-        try {
-            // Get all entity hash keys that match the pattern
-            String entityHashPattern = hashName + ":*:idx";
-            Set<String> entityHashKeys = redisTemplate.keys(entityHashPattern);
-
-            if (entityHashKeys == null || entityHashKeys.isEmpty()) {
-                return 0;
-            }
-
-            // Get all entity IDs from the main set
-            var connectionFactory = redisTemplate.getConnectionFactory();
-            if (connectionFactory == null) {
-                log.warn("Redis connection factory is null, skipping orphaned entity hash cleanup");
-                return 0;
-            }
-
-            Set<byte[]> mainSetEntityIds = connectionFactory
-                    .getConnection()
-                    .setCommands()
-                    .sMembers(hashName.getBytes());
-
-            Set<String> validEntityIds = new HashSet<>();
-            if (mainSetEntityIds != null) {
-                for (byte[] entityIdBytes : mainSetEntityIds) {
-                    validEntityIds.add(new String(entityIdBytes));
-                }
-            }
-
-            // Check each entity hash key
-            for (String entityHashKey : entityHashKeys) {
-                try {
-                    // Extract entity ID from the key (e.g., "jwt_tokens:UUID:idx" -> "UUID")
-                    String[] parts = entityHashKey.split(":");
-                    if (parts.length >= 2) {
-                        String entityId = parts[1];
-
-                        // If this entity ID is not in the main set, the hash is orphaned
-                        if (!validEntityIds.contains(entityId)) {
-                            // Check if the hash is expired or has no TTL
-                            Long ttl = redisTemplate.getExpire(entityHashKey);
-                            if (ttl == null || ttl <= 0) {
-                                Boolean deleted = redisTemplate.delete(entityHashKey);
-                                if (deleted != null && deleted) {
-                                    totalCleaned++;
-                                }
-                            }
-                        }
-                    }
-                } catch (Exception e) {
-                    log.warn("Error processing orphaned entity hash: {}", entityHashKey, e);
-                }
-            }
-
-        } catch (Exception e) {
-            log.warn("Error cleaning up orphaned entity hashes: {}", hashName, e);
         }
 
         return totalCleaned;
@@ -251,10 +224,9 @@ public class RedisCleanupService {
      */
     private int cleanupIndexedField(String hashName, String fieldName) {
         int totalCleaned = 0;
-        int emptyIndexKeysRemoved = 0;
-
         try {
-            // Get all index keys for this field (Spring Data Redis pattern: hashName:fieldName:value)
+            // Get all index keys for this field (Spring Data Redis pattern:
+            // hashName:fieldName:value)
             String indexKeyPattern = hashName + ":" + fieldName + ":*";
             Set<String> indexKeys = redisTemplate.keys(indexKeyPattern);
 
@@ -281,7 +253,7 @@ public class RedisCleanupService {
                         // Index set is already empty, remove the index key
                         Boolean deleted = redisTemplate.delete(indexKey);
                         if (deleted != null && deleted) {
-                            emptyIndexKeysRemoved++;
+                            totalCleaned += 1;
                         }
                         continue;
                     }
@@ -317,7 +289,7 @@ public class RedisCleanupService {
                         // Index set is now empty after cleanup, remove the index key
                         Boolean deleted = redisTemplate.delete(indexKey);
                         if (deleted != null && deleted) {
-                            emptyIndexKeysRemoved++;
+                            totalCleaned += 1;
                         }
                     }
 
@@ -325,8 +297,6 @@ public class RedisCleanupService {
                     log.warn("Error processing index key: {}", indexKey, e);
                 }
             }
-
-
 
         } catch (Exception e) {
             log.warn("Error cleaning up indexed field: {}", fieldName, e);

@@ -3,6 +3,8 @@ package com.securevault.main.service.expiration;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.data.redis.connection.DataType;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +13,13 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Redis cleanup service that removes stale indexed data when entities with TTL
- * expire.
- * This service uses the RedisEntityDiscoveryService to find entities that need
- * cleanup
- * and performs the actual cleanup operations.
+ * expire. This service uses the RedisEntityDiscoveryService to find entities that
+ * need cleanup and performs the actual cleanup operations.
+ * 
+ * The cleanup process is performed in two phases:
+ * 1. Cleanup of stale entity hashes and update main set
+ * 2. Cleanup of indexed fields
+ * 
  */
 @Slf4j
 @Service
@@ -105,6 +110,15 @@ public class RedisCleanupService {
         }
     }
 
+    private RedisConnectionFactory getConnectionFactoryOrWarn() {
+        RedisConnectionFactory connectionFactory = redisTemplate.getConnectionFactory();
+        if (connectionFactory == null) {
+            log.warn("Redis connection factory is null, skipping entity hash cleanup");
+            return null;
+        }
+        return connectionFactory;
+    }
+
     /**
      * Clean up stale entity hashes and remove their IDs from the main set
      * 
@@ -116,9 +130,8 @@ public class RedisCleanupService {
 
         try {
             // Get connection factory
-            var connectionFactory = redisTemplate.getConnectionFactory();
+            RedisConnectionFactory connectionFactory = getConnectionFactoryOrWarn();
             if (connectionFactory == null) {
-                log.warn("Redis connection factory is null, skipping entity hash cleanup");
                 return 0;
             }
 
@@ -156,16 +169,16 @@ public class RedisCleanupService {
                 else if (exists != null && exists) {
                     try {
                         // First check the type of the key
-                        var keyTypeResult = connectionFactory
+                        DataType keyTypeResult = connectionFactory
                                 .getConnection()
                                 .keyCommands()
                                 .type(entityHashKey.getBytes());
-                        
+
                         if (keyTypeResult == null) {
                             log.warn("Could not determine type for key: {}", entityHashKey);
                             continue;
                         }
-                        
+
                         String keyType = keyTypeResult.name();
 
                         if ("SET".equals(keyType)) {
@@ -235,9 +248,8 @@ public class RedisCleanupService {
             }
 
             // Get connection factory once for this field
-            var connectionFactory = redisTemplate.getConnectionFactory();
+            RedisConnectionFactory connectionFactory = getConnectionFactoryOrWarn();
             if (connectionFactory == null) {
-                log.warn("Redis connection factory is null, skipping field: {}", fieldName);
                 return 0;
             }
 

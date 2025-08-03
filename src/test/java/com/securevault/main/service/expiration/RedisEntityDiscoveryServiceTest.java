@@ -24,22 +24,20 @@ class RedisEntityDiscoveryServiceTest {
 
     @BeforeEach
     void setUp() {
-        discoveryService = new RedisEntityDiscoveryService();
+        discoveryService = new RedisEntityDiscoveryService(java.util.List.of("com.securevault.main.entity"));
     }
 
     @Test
     void testDiscoverRedisEntities() {
-        // Given
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "jwtToken" });
-        when(applicationContext.getType("jwtToken")).thenReturn(null);
-
         // When
         discoveryService.discoverRedisEntities();
 
         // Then
         Map<String, Map<String, Object>> entities = discoveryService.getDiscoveredEntities();
         assertNotNull(entities);
-        assertTrue(entities.isEmpty());
+        // Should find at least the JwtToken entity
+        assertTrue(entities.size() >= 1);
+        assertTrue(entities.containsKey("JwtToken"));
     }
 
     @Test
@@ -67,8 +65,6 @@ class RedisEntityDiscoveryServiceTest {
     @Test
     void testGetEntitiesNeedingCleanup() {
         // Given
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "jwtToken" });
-        when(applicationContext.getType("jwtToken")).thenReturn(null);
         discoveryService.discoverRedisEntities();
 
         // When
@@ -77,7 +73,9 @@ class RedisEntityDiscoveryServiceTest {
 
         // Then
         assertNotNull(entitiesNeedingCleanup);
-        assertEquals(0, entitiesNeedingCleanup.size());
+        // Should find at least the JwtToken entity that needs cleanup
+        assertTrue(entitiesNeedingCleanup.size() >= 1);
+        assertTrue(entitiesNeedingCleanup.containsKey(JwtToken.class));
     }
 
     @Test

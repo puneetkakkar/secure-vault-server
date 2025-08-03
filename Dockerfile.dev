@@ -1,26 +1,62 @@
-FROM eclipse-temurin:17-jdk
+# Multi-stage build for development
+FROM eclipse-temurin:17-jdk AS deps
 
 WORKDIR /app
 
-# Install curl for healthcheck
+# Install Maven
 RUN apt-get update && \
-    apt-get install -y curl maven && \
+    apt-get install -y maven && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy pom.xml
+# Copy pom.xml first for better layer caching
 COPY pom.xml ./
 
-# Download dependencies and plugins
-RUN mvn dependency:go-offline -B
+# Download dependencies and plugins (this layer will be cached if pom.xml doesn't change)
+RUN mvn go-offline:resolve-dependencies -B
+
+FROM eclipse-temurin:17-jdk AS builder
+
+WORKDIR /app
+
+# Copy dependencies from deps stage
+COPY --from=deps /root/.m2 /root/.m2
+
+# Copy pom.xml for build context
+COPY pom.xml ./
 
 # Copy the source code
 COPY src ./src
 
-# Build the application
-RUN mvn clean package -DskipTests -B
+# Build the application (this will be cached if source doesn't change)
+RUN mvn package -DskipTests -B -o
+
+FROM eclipse-temurin:17-jdk AS dev
+
+WORKDIR /app
+
+# Install Maven and inotify-tools in a single layer
+RUN apt-get update && \
+    apt-get install -y maven inotify-tools curl && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean
+
+# Copy Maven dependencies from deps stage
+COPY --from=deps /root/.m2 /root/.m2
+
+# Copy pom.xml for Maven context
+COPY pom.xml ./
+
+# Copy the entrypoint script
+COPY ./docker-entrypoint.sh /docker-entrypoint.sh
+
+# Make entrypoint executable
+RUN chmod +x /docker-entrypoint.sh
+
+# Create a non-root user for development (optional, but good practice)
+RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # Expose the application port
 EXPOSE 8080
 
-# Run the application with logging to console
-ENTRYPOINT ["java", "-jar", "target/main-0.0.1-SNAPSHOT.jar"] 
+# Set the entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]

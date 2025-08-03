@@ -208,6 +208,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - SPRING_PROFILES_ACTIVE=production
+      - JAVA_OPTS=-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC -XX:+UseStringDeduplication -Djava.security.egd=file:/dev/./urandom
     volumes:
       - ./src/main/resources/prod-env.properties:/app/src/main/resources/prod-env.properties:ro
     ports:
@@ -225,11 +226,19 @@ services:
         condition: service_healthy
     networks:
       - secure-vault-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health/live"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 60s
 
 volumes:
   mongodb-data:

@@ -2,20 +2,20 @@ package com.securevault.main.service.expiration;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.HashSet;
 
-import org.springframework.data.redis.core.index.Indexed;
-import org.springframework.data.redis.core.TimeToLive;
-import org.springframework.data.redis.core.RedisHash;
-import org.springframework.stereotype.Service;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 import org.springframework.core.type.classreading.MetadataReaderFactory;
+import org.springframework.data.redis.core.RedisHash;
+import org.springframework.data.redis.core.TimeToLive;
+import org.springframework.data.redis.core.index.Indexed;
+import org.springframework.stereotype.Service;
 import org.springframework.util.ClassUtils;
 
 import lombok.RequiredArgsConstructor;
@@ -35,10 +35,8 @@ public class RedisEntityDiscoveryService {
     // Cache of discovered entity metadata to avoid repeated reflection
     private final Map<Class<?>, EntityMetadata> entityMetadataCache = new ConcurrentHashMap<>();
 
-    // Package patterns to scan for Redis entities, configurable via application properties
-    // Example property: redis.entity.package-patterns=com.securevault.main.entity
-    @org.springframework.beans.factory.annotation.Value("#{'${redis.entity.package-patterns:com.securevault.main.entity}'.split(',')}")
-    private final java.util.List<String> packagePatterns;
+    // Configuration properties for Redis entity discovery
+    private final RedisEntityDiscoveryProperties discoveryProperties;
 
     /**
      * Entity metadata for cleanup operations
@@ -86,7 +84,7 @@ public class RedisEntityDiscoveryService {
             int discoveredCount = 0;
 
             // Scan each package pattern for Redis entities
-            for (String packagePattern : packagePatterns) {
+            for (String packagePattern : discoveryProperties.getPackagePatterns()) {
                 try {
                     Set<Class<?>> redisEntities = scanPackageForRedisEntities(packagePattern);
 

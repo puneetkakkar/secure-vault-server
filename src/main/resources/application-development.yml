@@ -101,6 +101,9 @@ app:
     cleanup:
       enabled: ${REDIS_CLEANUP_ENABLED:true}
       interval: ${REDIS_CLEANUP_INTERVAL:60000}
+    entity:
+      package-patterns:
+        - com.securevault.main.entity
   url: ${SERVER_URL}
   frontend-url: ${FRONTEND_URL}
 

@@ -1,7 +1,11 @@
 package com.securevault.main.service.expiration;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.when;
 
 import java.util.Set;
 
@@ -42,7 +46,7 @@ class RedisCleanupServiceTest {
     @Test
     void testPerformCleanup() {
         // Given
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"jwtToken"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "jwtToken" });
         when(applicationContext.getType("jwtToken")).thenReturn(null);
         when(redisTemplate.keys("jwt_tokens:*")).thenReturn(Set.of("jwt_tokens:test-id"));
         when(redisTemplate.getExpire("jwt_tokens:test-id")).thenReturn(0L); // Expired
@@ -62,7 +66,7 @@ class RedisCleanupServiceTest {
     @Test
     void testPerformCleanupNoExpiredTokens() {
         // Given
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"jwtToken"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "jwtToken" });
         when(applicationContext.getType("jwtToken")).thenReturn(null);
         when(redisTemplate.keys("jwt_tokens:*")).thenReturn(Set.of("jwt_tokens:test-id"));
         when(redisTemplate.getExpire("jwt_tokens:test-id")).thenReturn(3600L); // Not expired
@@ -80,7 +84,7 @@ class RedisCleanupServiceTest {
     @Test
     void testPerformCleanupNoTokens() {
         // Given
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"jwtToken"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "jwtToken" });
         when(applicationContext.getType("jwtToken")).thenReturn(null);
         when(redisTemplate.keys("jwt_tokens:*")).thenReturn(Set.of());
 
@@ -98,7 +102,7 @@ class RedisCleanupServiceTest {
     void testHasTtlAndIndexedFields() {
         // Test JWT token class
         assertTrue(RedisEntityDiscoveryService.hasTtlAndIndexedFields(JwtToken.class));
-        
+
         // Test a class without annotations
         assertFalse(RedisEntityDiscoveryService.hasTtlAndIndexedFields(String.class));
     }
@@ -106,7 +110,7 @@ class RedisCleanupServiceTest {
     @Test
     void testGetDiscoveredEntities() {
         // Given
-        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[]{"jwtToken"});
+        when(applicationContext.getBeanDefinitionNames()).thenReturn(new String[] { "jwtToken" });
         when(applicationContext.getType("jwtToken")).thenReturn(null);
 
         // When
@@ -133,4 +137,4 @@ class RedisCleanupServiceTest {
         assertEquals(1, result.getErrors());
         assertTrue(result.getDurationMs() >= 0);
     }
-} 
+}

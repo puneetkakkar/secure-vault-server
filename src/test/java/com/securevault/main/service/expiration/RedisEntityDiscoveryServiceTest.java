@@ -1,8 +1,12 @@
 package com.securevault.main.service.expiration;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -20,11 +24,15 @@ class RedisEntityDiscoveryServiceTest {
     @Mock
     private ApplicationContext applicationContext;
 
+    @Mock
+    private RedisEntityDiscoveryProperties discoveryProperties;
+
     private RedisEntityDiscoveryService discoveryService;
 
     @BeforeEach
     void setUp() {
-        discoveryService = new RedisEntityDiscoveryService(java.util.List.of("com.securevault.main.entity"));
+        lenient().when(discoveryProperties.getPackagePatterns()).thenReturn(List.of("com.securevault.main.entity"));
+        discoveryService = new RedisEntityDiscoveryService(discoveryProperties);
     }
 
     @Test

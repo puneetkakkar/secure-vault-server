@@ -1,7 +1,10 @@
 package com.securevault.main.service.expiration;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,7 +39,8 @@ class RedisCleanupSchedulerTest {
         scheduler.initialize();
 
         // Then - This test verifies the initialize method runs without errors
-        // The actual logging behavior is tested by the fact that no exceptions are thrown
+        // The actual logging behavior is tested by the fact that no exceptions are
+        // thrown
         assertTrue(true); // If we get here, the initialization was successful
     }
 
@@ -45,7 +49,7 @@ class RedisCleanupSchedulerTest {
         // Given
         ReflectionTestUtils.setField(scheduler, "cleanupEnabled", true);
         ReflectionTestUtils.setField(scheduler, "cleanupInterval", 60000L);
-        
+
         RedisCleanupService.CleanupResult mockResult = new RedisCleanupService.CleanupResult();
         when(cleanupService.performCleanup()).thenReturn(mockResult);
 
@@ -83,7 +87,7 @@ class RedisCleanupSchedulerTest {
         // Given
         ReflectionTestUtils.setField(scheduler, "cleanupEnabled", true);
         ReflectionTestUtils.setField(scheduler, "cleanupInterval", 60000L);
-        
+
         RedisCleanupService.CleanupResult mockResult = new RedisCleanupService.CleanupResult();
         mockResult.incrementErrors();
         when(cleanupService.performCleanup()).thenReturn(mockResult);
@@ -100,7 +104,7 @@ class RedisCleanupSchedulerTest {
         // Given
         ReflectionTestUtils.setField(scheduler, "cleanupEnabled", true);
         ReflectionTestUtils.setField(scheduler, "cleanupInterval", 60000L);
-        
+
         RedisCleanupService.CleanupResult mockResult = new RedisCleanupService.CleanupResult();
         mockResult.incrementEntitiesProcessed();
         mockResult.addCleanedEntries(5);
@@ -112,4 +116,4 @@ class RedisCleanupSchedulerTest {
         // Then
         verify(cleanupService, times(1)).performCleanup();
     }
-} 
+}

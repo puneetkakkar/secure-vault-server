@@ -29,6 +29,11 @@ public class RedisCleanupService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisEntityDiscoveryService redisEntityDiscoveryService;
 
+    /**
+     * Suffix used in Redis key naming convention to denote indexed fields.
+     * For example, a field index key will be named as
+     * <hashName>:<fieldName>:idx.
+     */
     private static final String IDX_SUFFIX = ":idx";
 
     /**

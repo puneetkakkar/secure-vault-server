@@ -35,10 +35,10 @@ public class RedisEntityDiscoveryService {
     // Cache of discovered entity metadata to avoid repeated reflection
     private final Map<Class<?>, EntityMetadata> entityMetadataCache = new ConcurrentHashMap<>();
 
-    // Package patterns to scan for Redis entities
-    private static final String[] PACKAGE_PATTERNS = {
-            "com.securevault.main.entity"
-    };
+    // Package patterns to scan for Redis entities, configurable via application properties
+    // Example property: redis.entity.package-patterns=com.securevault.main.entity
+    @org.springframework.beans.factory.annotation.Value("#{'${redis.entity.package-patterns:com.securevault.main.entity}'.split(',')}")
+    private final java.util.List<String> packagePatterns;
 
     /**
      * Entity metadata for cleanup operations
@@ -86,7 +86,7 @@ public class RedisEntityDiscoveryService {
             int discoveredCount = 0;
 
             // Scan each package pattern for Redis entities
-            for (String packagePattern : PACKAGE_PATTERNS) {
+            for (String packagePattern : packagePatterns) {
                 try {
                     Set<Class<?>> redisEntities = scanPackageForRedisEntities(packagePattern);
 

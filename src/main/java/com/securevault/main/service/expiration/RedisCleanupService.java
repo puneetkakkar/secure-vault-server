@@ -1,5 +1,6 @@
 package com.securevault.main.service.expiration;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,13 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Redis cleanup service that removes stale indexed data when entities with TTL
- * expire. This service uses the RedisEntityDiscoveryService to find entities that
- * need cleanup and performs the actual cleanup operations.
+ * expire. This service uses the RedisEntityDiscoveryService to find entities
+ * that need cleanup and performs the actual cleanup operations.
  * 
  * The cleanup process is performed in two phases:
  * 1. Cleanup of stale entity hashes and update main set
  * 2. Cleanup of indexed fields
- * 
  */
 @Slf4j
 @Service
@@ -139,7 +139,7 @@ public class RedisCleanupService {
             Set<byte[]> entityIdBytes = connectionFactory
                     .getConnection()
                     .setCommands()
-                    .sMembers(hashName.getBytes());
+                    .sMembers(hashName.getBytes(StandardCharsets.UTF_8));
 
             if (entityIdBytes == null || entityIdBytes.isEmpty()) {
                 return 0;
@@ -172,7 +172,7 @@ public class RedisCleanupService {
                         DataType keyTypeResult = connectionFactory
                                 .getConnection()
                                 .keyCommands()
-                                .type(entityHashKey.getBytes());
+                                .type(entityHashKey.getBytes(StandardCharsets.UTF_8));
 
                         if (keyTypeResult == null) {
                             log.warn("Could not determine type for key: {}", entityHashKey);
@@ -184,7 +184,7 @@ public class RedisCleanupService {
                             // Extract entity ID from the key (e.g., "jwt_tokens:UUID:idx" ->
                             // "jwt_tokens:UUID")
                             String[] parts = entityHashKey.split(":");
-                            if (parts.length >= 2) {
+                            if (parts != null && parts.length >= 2) {
                                 String setId = parts[1];
                                 String correspondingHashKey = hashName + ":" + setId;
 
@@ -258,7 +258,7 @@ public class RedisCleanupService {
                     Set<byte[]> entityIdBytes = connectionFactory
                             .getConnection()
                             .setCommands()
-                            .sMembers(indexKey.getBytes());
+                            .sMembers(indexKey.getBytes(StandardCharsets.UTF_8));
 
                     if (entityIdBytes == null || entityIdBytes.isEmpty()) {
                         // Index set is already empty, remove the index key
@@ -282,7 +282,7 @@ public class RedisCleanupService {
                             Long removed = connectionFactory
                                     .getConnection()
                                     .setCommands()
-                                    .sRem(indexKey.getBytes(), entityIdByteArray);
+                                    .sRem(indexKey.getBytes(StandardCharsets.UTF_8), entityIdByteArray);
 
                             if (removed != null && removed > 0) {
                                 totalCleaned += removed;

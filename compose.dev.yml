@@ -39,15 +39,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      target: dev
     env_file:
       - ./src/main/resources/dev-env.properties
     environment:
       - SPRING_PROFILES_ACTIVE=development
     volumes:
-      - ./src/main/resources/dev-env.properties:/app/src/main/resources/dev-env.properties:ro
       - ./src:/app/src
+      - ./src/main/resources/dev-env.properties:/app/src/main/resources/dev-env.properties:ro
     ports:
       - "8080:8080"
+    restart: unless-stopped
     depends_on:
       mongodb:
         condition: service_healthy

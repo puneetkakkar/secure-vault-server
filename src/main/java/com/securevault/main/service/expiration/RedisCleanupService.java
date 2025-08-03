@@ -29,6 +29,8 @@ public class RedisCleanupService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisEntityDiscoveryService redisEntityDiscoveryService;
 
+    private static final String IDX_SUFFIX = ":idx";
+
     /**
      * Perform cleanup of stale Redis indexed data
      * This method uses the discovery service to find entities and cleans up expired
@@ -148,7 +150,7 @@ public class RedisCleanupService {
             // Check each entity ID to see if the corresponding entity hash is expired
             for (byte[] entityIdByteArray : entityIdBytes) {
                 String entityId = new String(entityIdByteArray);
-                String entityHashKey = hashName + ":" + entityId + ":idx";
+                String entityHashKey = hashName + ":" + entityId + IDX_SUFFIX;
 
                 // Check if the entity hash key exists
                 Boolean exists = redisTemplate.hasKey(entityHashKey);

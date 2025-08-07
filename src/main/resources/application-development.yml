@@ -19,6 +19,9 @@ spring:
   docker:
     compose:
       enabled: false
+  output:
+    ansi:
+      enabled: ALWAYS
   messages:
     basename: locales/message
   data:

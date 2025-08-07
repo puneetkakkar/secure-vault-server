@@ -44,6 +44,8 @@ services:
       - ./src/main/resources/dev-env.properties
     environment:
       - SPRING_PROFILES_ACTIVE=development
+      - SPRING_OUTPUT_ANSI_ENABLED=ALWAYS
+      - MAVEN_OPTS=-Dspring.output.ansi.enabled=ALWAYS
     volumes:
       - ./src:/app/src
       - ./src/main/resources/dev-env.properties:/app/src/main/resources/dev-env.properties:ro

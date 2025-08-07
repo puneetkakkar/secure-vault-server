@@ -30,13 +30,16 @@ echo "Starting file watcher for hot reload..."
 (
     while inotifywait -r -e modify,create,delete,move /app/src/main/ 2>/dev/null; do
         echo "Changes detected, recompiling..."
-        mvn compile -B -o -DskipTests >/dev/null 2>&1 || echo "Compilation failed, continuing..."
+        mvn compile -B -DskipTests >/dev/null 2>&1 || echo "Compilation failed, continuing..."
     done
 ) &
 WATCH_PID=$!
 
-# Start Spring Boot application
+# Start Spring Boot application with colored output
 echo "Starting Spring Boot application..."
+# Enable colored output for Spring Boot
+export SPRING_OUTPUT_ANSI_ENABLED=ALWAYS
+export MAVEN_OPTS="-Dspring.output.ansi.enabled=ALWAYS"
 mvn spring-boot:run -B &
 MAVEN_PID=$!
 

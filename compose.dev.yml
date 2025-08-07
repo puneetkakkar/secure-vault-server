@@ -48,7 +48,6 @@ services:
       - MAVEN_OPTS=-Dspring.output.ansi.enabled=ALWAYS
     volumes:
       - ./src:/app/src
-      - ./src/main/resources/dev-env.properties:/app/src/main/resources/dev-env.properties:ro
     ports:
       - "8080:8080"
     restart: unless-stopped

@@ -28,7 +28,7 @@ fi
 # Start file watcher in background for hot reload
 echo "Starting file watcher for hot reload..."
 (
-    while inotifywait -r -e modify,create,delete,move /app/src/main/ 2>/dev/null; do
+    while inotifywait -r --include=".*\.java$" -e modify,create,delete,move /app/src/main/ 2>/dev/null; do
         echo "Changes detected, recompiling..."
         mvn compile -B -DskipTests >/dev/null 2>&1 || echo "Compilation failed, continuing..."
     done

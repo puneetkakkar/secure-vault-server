@@ -28,7 +28,7 @@ COPY pom.xml ./
 COPY src ./src
 
 # Build the application (this will be cached if source doesn't change)
-RUN mvn package -DskipTests -B -o
+RUN mvn package -DskipTests -B
 
 FROM eclipse-temurin:17-jdk AS dev
 
